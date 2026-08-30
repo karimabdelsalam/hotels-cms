@@ -1,566 +1,471 @@
 <title>Aten Hotels Homepage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Jost:wght@300;400;500&family=Tajawal:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@200;300;400;500&family=IBM+Plex+Sans+Arabic:wght@300;400&display=swap">
 
 <style>
+/* ============================================================
+   ATEN — single visual world: cinematic, dark, light-driven.
+   Deliberately one theme. Every colour painted explicitly.
+   ============================================================ */
 :root{
-  --lapis-900:#06203C;
-  --lapis-800:#0B3A66;
-  --lapis-700:#0F4779;
-  --lapis-600:#17568F;
-  --lapis-400:#4A8AC9;
+  --ink:#09090B;
+  --ink-2:#0E0E11;
+  --ink-3:#141418;
+  --bone:#F3F0EA;
+  --dim:rgba(243,240,234,.56);
+  --dim-2:rgba(243,240,234,.34);
+  --sand:#CDA57A;
+  --line:rgba(243,240,234,.10);
+  --line-2:rgba(243,240,234,.18);
+  --glass:rgba(20,20,24,.55);
 
-  --gold-600:#8A6522;
-  --gold-500:#C9A24D;
-  --gold-300:#E5CC93;
+  --serif:"Instrument Serif",Georgia,serif;
+  --sans:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --arab:"IBM Plex Sans Arabic","Manrope",ui-sans-serif,system-ui,sans-serif;
 
-  --papyrus:#F7F1E4;
-  --sand:#ECE1CC;
-  --surface:#FFFFFF;
-
-  --ink:#171512;
-  --ink-2:#57503F;
-  --ink-3:#8A8170;
-  --on-lapis:#F3EDE0;
-  --on-lapis-2:#B9C9DC;
-
-  --garnet:#7C2E3C;
-  --garnet-900:#5C1F2B;
-
-  --line:#DED2B8;
-
-  --serif:"Bodoni Moda",Didot,"Times New Roman",serif;
-  --sans:"Jost",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-  --arab:"Tajawal","Jost",ui-sans-serif,system-ui,sans-serif;
-
-  --shadow:0 1px 2px rgba(6,32,60,.06),0 14px 34px rgba(6,32,60,.10);
-  --shadow-lift:0 2px 4px rgba(6,32,60,.08),0 26px 56px rgba(6,32,60,.16);
-
-  --pad:clamp(20px,5vw,64px);
-  --rhythm:clamp(80px,10vw,150px);
-}
-
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --papyrus:#12100D;
-    --sand:#1A1713;
-    --surface:#1D1A15;
-    --ink:#EFE8DA;
-    --ink-2:#B3AA97;
-    --ink-3:#877E6D;
-    --line:#332C21;
-    --gold-600:#D6AC5C;
-    --garnet:#8E3A48;
-  }
-}
-:root[data-theme="dark"]{
-  --papyrus:#12100D;
-  --sand:#1A1713;
-  --surface:#1D1A15;
-  --ink:#EFE8DA;
-  --ink-2:#B3AA97;
-  --ink-3:#877E6D;
-  --line:#332C21;
-  --gold-600:#D6AC5C;
-  --garnet:#8E3A48;
+  --pad:clamp(20px,4.6vw,72px);
+  --rhythm:clamp(96px,13vw,200px);
+  --ease:cubic-bezier(.22,1,.36,1);
 }
 
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 
 body{
-  background:var(--papyrus);
-  color:var(--ink);
+  background:var(--ink);
+  color:var(--bone);
   font-family:var(--sans);
-  font-size:17px;
+  font-size:16px;
   font-weight:300;
-  line-height:1.7;
+  line-height:1.65;
+  letter-spacing:.002em;
   -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 
-.wrap{max-width:1360px;margin:0 auto;padding-inline:var(--pad)}
-
-h1,h2,h3{margin:0;text-wrap:balance}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:var(--pad)}
+h1,h2,h3{margin:0;font-weight:400}
 p{margin:0}
-a{color:inherit}
+a{color:inherit;text-decoration:none}
+img,svg{display:block;max-width:100%}
 
-.display{
-  font-family:var(--serif);
-  font-weight:400;
-  font-size:clamp(2.75rem,1.4rem + 5vw,5.25rem);
-  line-height:1.03;
-  letter-spacing:-.015em;
+/* ---------- type scale ---------- */
+.d1{font-family:var(--serif);font-size:clamp(3.2rem,10.5vw,10rem);line-height:.92;letter-spacing:-.035em}
+.d2{font-family:var(--serif);font-size:clamp(2.4rem,6.2vw,5.5rem);line-height:1;letter-spacing:-.028em}
+.d3{font-family:var(--serif);font-size:clamp(1.9rem,3.6vw,3.1rem);line-height:1.06;letter-spacing:-.022em}
+.d1 em,.d2 em,.d3 em{font-style:italic;color:var(--sand)}
+
+.tag{
+  font-size:.6875rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim-2);
 }
-.h2{
-  font-family:var(--serif);
-  font-weight:400;
-  font-size:clamp(2rem,1.3rem + 2.6vw,3.25rem);
-  line-height:1.08;
-  letter-spacing:-.012em;
+.tag--sand{color:var(--sand)}
+
+.lede{font-size:clamp(1rem,1.15vw,1.1875rem);color:var(--dim);max-width:56ch;font-weight:200;line-height:1.75}
+
+/* ---------- grain + focus ---------- */
+.grain{
+  position:fixed;inset:0;z-index:200;pointer-events:none;opacity:.22;mix-blend-mode:overlay;
 }
-.h3{font-family:var(--sans);font-weight:500;font-size:1.0625rem;line-height:1.35;letter-spacing:.005em}
+:focus-visible{outline:2px solid var(--sand);outline-offset:4px;border-radius:4px}
 
-.eyebrow{
-  font-size:.6875rem;
-  font-weight:500;
-  letter-spacing:.19em;
-  text-transform:uppercase;
-  color:var(--gold-600);
+/* ---------- scroll progress ---------- */
+.progress{
+  position:fixed;inset-block-start:0;inset-inline-start:0;height:2px;width:0%;
+  background:var(--sand);z-index:180;transition:width .1s linear;
 }
-.eyebrow--onlapis{color:var(--gold-500)}
 
-.lede{font-size:1.0625rem;color:var(--ink-2);max-width:62ch}
-.on-lapis .lede{color:var(--on-lapis-2)}
+/* ---------- nav ---------- */
+.nav{
+  position:fixed;inset-block-start:0;inset-inline:0;z-index:150;
+  transition:background .45s var(--ease),backdrop-filter .45s var(--ease),border-color .45s var(--ease),padding .45s var(--ease);
+  border-bottom:1px solid transparent;padding-block:26px;
+}
+.nav.stuck{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  backdrop-filter:blur(22px) saturate(150%);
+  border-bottom-color:var(--line);
+  padding-block:14px;
+}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.mark{display:flex;flex-direction:column;gap:2px;line-height:1}
+.mark b{font-family:var(--serif);font-weight:400;font-size:1.55rem;letter-spacing:.3em;text-indent:.3em}
+.mark span{font-size:.5rem;letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;color:var(--dim-2)}
+.nav-links{display:none;gap:38px;align-items:center}
+@media(min-width:1040px){.nav-links{display:flex}}
+.nav-links a{font-size:.8125rem;font-weight:400;color:var(--dim);position:relative;padding-block:4px;transition:color .3s}
+.nav-links a::after{
+  content:"";position:absolute;inset-block-end:0;inset-inline-start:0;width:0;height:1px;
+  background:var(--sand);transition:width .4s var(--ease);
+}
+.nav-links a:hover{color:var(--bone)}
+.nav-links a:hover::after{width:100%}
+.nav-right{display:flex;align-items:center;gap:18px}
+.lang{display:none;gap:12px;font-size:.75rem;color:var(--dim-2)}
+@media(min-width:720px){.lang{display:flex}}
+.lang a:hover{color:var(--sand)}
+.lang .on{color:var(--bone)}
+.lang [lang="ar"]{font-family:var(--arab)}
 
-:focus-visible{outline:2px solid var(--lapis-800);outline-offset:3px;border-radius:2px}
-.on-lapis :focus-visible,.dark-ground :focus-visible{outline-color:var(--gold-300)}
-
-/* ---------- lattice ---------- */
-.lattice{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-
-/* ---------- utility bar ---------- */
-.utility{background:var(--lapis-900);color:var(--on-lapis-2);font-size:.75rem;letter-spacing:.04em}
-.utility .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:38px;flex-wrap:wrap}
-.utility a{text-decoration:none;opacity:.85}
-.utility a:hover{opacity:1;color:var(--gold-300)}
-.langs{display:flex;gap:14px;align-items:center}
-.langs .on{color:var(--gold-300);opacity:1}
-.langs [lang="ar"]{font-family:var(--arab)}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--sans);
+  font-size:.75rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;
+  padding:13px 26px;border-radius:100px;border:1px solid var(--line-2);
+  background:transparent;color:var(--bone);
+  transition:background .35s var(--ease),color .35s var(--ease),border-color .35s var(--ease),transform .35s var(--ease);
+}
+.btn:hover{background:var(--bone);color:var(--ink);border-color:var(--bone);transform:translateY(-2px)}
+.btn--sand{background:var(--sand);border-color:var(--sand);color:var(--ink)}
+.btn--sand:hover{background:var(--bone);border-color:var(--bone)}
+.btn--ink{border-color:rgba(9,9,11,.22);color:var(--ink)}
+.btn--ink:hover{background:var(--ink);color:var(--bone);border-color:var(--ink)}
+.btn .ar{transition:transform .35s var(--ease)}
+.btn:hover .ar{transform:translateX(4px)}
 
 /* ---------- hero ---------- */
-.hero{
-  position:relative;
-  background:
-    radial-gradient(120% 90% at 78% 10%,rgba(201,162,77,.30) 0%,rgba(201,162,77,0) 55%),
-    radial-gradient(100% 80% at 12% 92%,rgba(23,86,143,.65) 0%,rgba(23,86,143,0) 60%),
-    linear-gradient(168deg,var(--lapis-700) 0%,var(--lapis-800) 46%,var(--lapis-900) 100%);
-  color:var(--on-lapis);
-  overflow:hidden;
-  isolation:isolate;
-}
-.hero::after{
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
+.plate{position:absolute;inset:0;z-index:0;background:var(--ink)}
+.plate canvas,.plate video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.plate canvas{filter:blur(54px) saturate(135%);transform:scale(1.28)}
+.plate::after{
   content:"";position:absolute;inset:0;
-  background:linear-gradient(to bottom,rgba(6,32,60,.42) 0%,rgba(6,32,60,.06) 34%,rgba(6,32,60,.55) 100%);
-  pointer-events:none;
+  background:
+    radial-gradient(72% 58% at 50% 42%,rgba(9,9,11,0) 0%,rgba(9,9,11,.55) 78%,rgba(9,9,11,.86) 100%),
+    linear-gradient(to bottom,rgba(9,9,11,.72) 0%,rgba(9,9,11,.20) 34%,rgba(9,9,11,.34) 62%,var(--ink) 99%);
 }
-.hero > *{position:relative;z-index:2}
+.glow{
+  position:absolute;width:620px;height:620px;border-radius:50%;z-index:1;pointer-events:none;
+  background:radial-gradient(circle,rgba(205,165,122,.16) 0%,rgba(205,165,122,0) 62%);
+  transform:translate(-50%,-50%);transition:opacity .6s;opacity:0;
+}
+.hero-inner{position:relative;z-index:2;padding-block:0 clamp(36px,5vw,60px);display:flex;flex-direction:column;gap:clamp(34px,5vw,58px)}
 
-.masthead{padding-block:26px}
-.masthead .wrap{display:flex;flex-direction:column;align-items:center;gap:20px}
-.wordmark{display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none}
-.wordmark .name{
-  font-family:var(--serif);font-weight:400;
-  font-size:2rem;letter-spacing:.34em;text-indent:.34em;
-  color:var(--on-lapis);line-height:1;
-}
-.wordmark .sub{
-  font-size:.5625rem;letter-spacing:.34em;text-indent:.34em;
-  text-transform:uppercase;color:var(--gold-500);font-weight:400;
-}
-nav.primary ul{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 34px;list-style:none;margin:0;padding:0}
-nav.primary a{
-  text-decoration:none;font-size:.8125rem;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--on-lapis);opacity:.86;padding:4px 0;border-bottom:1px solid transparent;
-  transition:opacity .2s,border-color .2s;
-}
-nav.primary a:hover{opacity:1;border-bottom-color:var(--gold-500)}
-
-.hero-body{
-  padding-block:clamp(52px,9vw,104px) clamp(64px,9vw,116px);
-  display:flex;flex-direction:column;align-items:center;gap:clamp(38px,5vw,60px);
-  text-align:center;
-}
-.hero-copy{display:flex;flex-direction:column;align-items:center;gap:20px;max-width:20ch}
-.hero-copy .display{max-width:16ch}
-.hero-sub{color:var(--on-lapis-2);max-width:46ch;font-size:1.0625rem}
-
-.rule-gold{width:52px;height:1px;background:var(--gold-500)}
+.hero-copy{display:flex;flex-direction:column;gap:clamp(18px,2.4vw,30px);max-width:20ch}
+.hero-copy .lede{max-width:44ch}
+.reveal-line{display:block;overflow:hidden}
+.reveal-line > span{display:block;transform:translateY(105%);opacity:0;animation:rise 1.15s var(--ease) forwards}
+.reveal-line:nth-child(2) > span{animation-delay:.11s}
+.reveal-line:nth-child(3) > span{animation-delay:.22s}
+@keyframes rise{to{transform:translateY(0);opacity:1}}
+.fade-up{opacity:0;transform:translateY(22px);animation:fu 1.1s var(--ease) .5s forwards}
+@keyframes fu{to{opacity:1;transform:translateY(0)}}
 
 /* ---------- search ---------- */
 .search{
-  width:100%;max-width:920px;background:var(--surface);border-radius:999px;
-  box-shadow:var(--shadow-lift);display:flex;align-items:stretch;text-align:start;
-  padding:7px 7px 7px 10px;gap:2px;
+  display:flex;align-items:stretch;gap:4px;padding:6px;border-radius:100px;
+  background:rgba(243,240,234,.07);border:1px solid var(--line-2);
+  -webkit-backdrop-filter:blur(26px) saturate(160%);backdrop-filter:blur(26px) saturate(160%);
+  max-width:940px;width:100%;
 }
-.field{
-  flex:1;min-width:0;padding:10px 20px;display:flex;flex-direction:column;gap:1px;
-  border-inline-end:1px solid var(--line);cursor:pointer;border-radius:999px;
-  transition:background .18s;
+.fld{
+  flex:1;min-width:0;padding:12px 24px;border-radius:100px;cursor:pointer;text-align:start;
+  display:flex;flex-direction:column;gap:2px;background:none;border:none;font-family:var(--sans);
+  transition:background .3s var(--ease);position:relative;
 }
-.field:hover{background:var(--sand)}
-.field:last-of-type{border-inline-end:none}
-.field .lbl{font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
-.field .val{font-size:.9375rem;color:var(--ink);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.field .val.dim{color:var(--ink-3)}
-.btn-search{
-  border:none;cursor:pointer;font-family:var(--sans);
-  background:var(--gold-500);color:var(--lapis-900);
-  font-size:.75rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
-  padding:0 34px;border-radius:999px;white-space:nowrap;transition:background .2s;
+.fld + .fld::before{
+  content:"";position:absolute;inset-block:22%;inset-inline-start:0;width:1px;background:var(--line);
 }
-.btn-search:hover{background:var(--gold-300)}
-.promo-line{font-size:.8125rem;color:var(--on-lapis-2)}
-.promo-line button{
-  background:none;border:none;padding:0;cursor:pointer;font-family:var(--sans);font-size:.8125rem;
-  color:var(--gold-300);border-bottom:1px solid rgba(229,204,147,.45);
+.fld:hover{background:rgba(243,240,234,.07)}
+.fld .k{font-size:.625rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim-2);font-weight:500}
+.fld .v{font-size:.9375rem;color:var(--bone);font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.search .btn{padding-inline:32px;flex-shrink:0}
+@media(max-width:860px){
+  .search{flex-direction:column;border-radius:24px}
+  .fld{border-radius:16px;padding:14px 20px}
+  .fld + .fld::before{inset:0 auto auto 0;width:auto;height:1px;inset-inline:20px}
+  .search .btn{justify-content:center;padding-block:16px;border-radius:16px}
 }
-.promo-line button:hover{border-bottom-color:var(--gold-300)}
 
-@media (max-width:820px){
-  .search{flex-direction:column;border-radius:20px;padding:8px;gap:0}
-  .field{border-inline-end:none;border-bottom:1px solid var(--line);border-radius:14px}
-  .field:last-of-type{border-bottom:none}
-  .btn-search{padding:16px;margin-top:6px;border-radius:14px}
-}
+.cue{display:flex;align-items:center;gap:12px;font-size:.6875rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-2)}
+.cue i{display:block;width:34px;height:1px;background:var(--dim-2);position:relative;overflow:hidden}
+.cue i::after{content:"";position:absolute;inset:0;background:var(--sand);animation:sweep 2.6s var(--ease) infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}55%,100%{transform:translateX(100%)}}
 
 /* ---------- sections ---------- */
-section{padding-block:var(--rhythm)}
-.band{position:relative;background:var(--lapis-800);color:var(--on-lapis);overflow:hidden;isolation:isolate}
-.band > *{position:relative;z-index:2}
-.band-sand{background:var(--sand)}
+section{position:relative}
+.pad{padding-block:var(--rhythm)}
+.head{display:flex;flex-direction:column;gap:20px;margin-bottom:clamp(44px,6vw,80px)}
+.head--row{flex-direction:row;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.head .d2{max-width:17ch}
 
-.sec-head{display:flex;flex-direction:column;gap:14px;margin-bottom:clamp(36px,4.5vw,56px)}
-.sec-head--split{flex-direction:row;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
-.sec-head .h2{max-width:18ch}
+/* scroll reveal */
+.rv{opacity:0;transform:translateY(34px);transition:opacity 1s var(--ease),transform 1s var(--ease);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
 
-.link-more{
-  font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;font-weight:500;
-  text-decoration:none;color:var(--gold-600);border-bottom:1px solid currentColor;
-  padding-bottom:3px;white-space:nowrap;
+/* ---------- manifesto ---------- */
+.manifesto{display:grid;grid-template-columns:1fr;gap:clamp(28px,4vw,64px)}
+@media(min-width:960px){.manifesto{grid-template-columns:1fr 1.15fr;align-items:start}}
+.manifesto .d2{max-width:14ch}
+.mf-body{display:flex;flex-direction:column;gap:28px;padding-top:8px}
+.mf-body p{color:var(--dim);font-weight:200;font-size:clamp(1.0625rem,1.4vw,1.375rem);line-height:1.65;max-width:48ch}
+.mf-body em{font-family:var(--serif);font-style:italic;color:var(--bone)}
+
+/* ---------- hotels ---------- */
+.hotels{display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px)}
+.house{
+  position:relative;display:grid;grid-template-columns:1fr;border-radius:22px;overflow:hidden;
+  background:var(--ink-2);isolation:isolate;
 }
-.on-lapis .link-more{color:var(--gold-300)}
-
-/* ---------- statement ---------- */
-.statement{text-align:center;display:flex;flex-direction:column;align-items:center;gap:24px}
-.statement .h2{max-width:20ch}
-.statement p{max-width:56ch;color:var(--ink-2);font-size:1.0625rem}
-
-/* ---------- hotel cards ---------- */
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(288px,1fr));gap:clamp(20px,2.4vw,32px)}
-
-.hotel{
-  background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden;
-  display:flex;flex-direction:column;transition:box-shadow .25s,transform .25s;
+@media(min-width:940px){
+  .house{grid-template-columns:1.25fr 1fr;min-height:460px}
+  .house:nth-child(even) .house-media{order:2}
 }
-.hotel:hover{box-shadow:var(--shadow-lift);transform:translateY(-3px)}
-.slot{position:relative;aspect-ratio:4/3;overflow:hidden;isolation:isolate}
-.slot .lattice{opacity:.5}
-.slot-cai{background:linear-gradient(150deg,#17568F 0%,#0B3A66 52%,#06203C 100%)}
-.slot-alx{background:linear-gradient(150deg,#1E6E8C 0%,#0F4A6B 55%,#07283F 100%)}
-.slot-rsg{background:linear-gradient(150deg,#2A8F92 0%,#146069 55%,#06303A 100%)}
-.slot-dst1{background:linear-gradient(160deg,#C9A24D 0%,#8A5F2C 45%,#06203C 100%)}
-.slot-dst2{background:linear-gradient(160deg,#4A8AC9 0%,#17568F 45%,#06203C 100%)}
-.slot-dst3{background:linear-gradient(160deg,#2A8F92 0%,#146069 45%,#06203C 100%)}
-.slot-dine{background:linear-gradient(150deg,#9A4050 0%,#7C2E3C 48%,#4A1822 100%)}
-.slot-meet{background:linear-gradient(150deg,#17568F 0%,#0B3A66 50%,#06203C 100%)}
+.house-media{position:relative;min-height:300px;overflow:hidden}
+.house-media .fill{position:absolute;inset:-6%;transition:transform 1.1s var(--ease)}
+.house:hover .house-media .fill{transform:scale(1.055)}
+.f-cai{background:radial-gradient(120% 100% at 25% 15%,#3A2F26 0%,#1A1512 45%,#0B0A09 100%)}
+.f-alx{background:radial-gradient(120% 100% at 75% 20%,#1F3038 0%,#141F26 46%,#090D10 100%)}
+.f-rsg{background:radial-gradient(120% 100% at 40% 80%,#22383A 0%,#122325 48%,#080E0F 100%)}
+.house-media::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(105deg,rgba(9,9,11,.10) 0%,rgba(9,9,11,.55) 100%);
+}
+.geo{
+  position:absolute;z-index:3;inset-block-end:20px;inset-inline-start:22px;
+  font-size:.625rem;letter-spacing:.18em;color:var(--dim-2);font-variant-numeric:tabular-nums;
+}
+.house-body{padding:clamp(30px,3.4vw,54px);display:flex;flex-direction:column;gap:18px;justify-content:center}
+.house-body .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.house-body .d3{max-width:12ch}
+.house-body p{color:var(--dim);max-width:42ch;font-weight:200}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.fact{font-size:.75rem;color:var(--dim);border:1px solid var(--line);padding:5px 13px;border-radius:100px;font-weight:300}
+.house-foot{
+  margin-top:16px;padding-top:22px;border-top:1px solid var(--line);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;
+}
+.rate .k{display:block;font-size:.625rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim-2);margin-bottom:3px}
+.rate .v{font-family:var(--serif);font-size:1.75rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rate .u{font-size:.8125rem;color:var(--dim-2)}
 
-.slot .badge{
-  position:absolute;inset-block-start:14px;inset-inline-start:14px;z-index:3;
-  background:rgba(6,32,60,.72);color:var(--gold-300);
-  font-size:.625rem;letter-spacing:.15em;text-transform:uppercase;font-weight:500;
-  padding:5px 11px;border-radius:2px;backdrop-filter:blur(3px);
+/* ---------- rail ---------- */
+.rail{
+  display:flex;gap:clamp(12px,1.4vw,20px);overflow-x:auto;scroll-snap-type:x mandatory;
+  padding-inline:var(--pad);padding-block:4px 20px;scrollbar-width:none;
 }
-.hotel-body{padding:26px 26px 28px;display:flex;flex-direction:column;gap:14px;flex:1}
-.hotel-name{font-family:var(--serif);font-weight:500;font-size:1.5rem;line-height:1.18;letter-spacing:-.005em}
-.hotel-meta{display:flex;align-items:center;gap:9px;font-size:.75rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
-.stars{color:var(--gold-600);letter-spacing:.12em;font-size:.6875rem}
-.hotel p{font-size:.9375rem;color:var(--ink-2);line-height:1.6}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{font-size:.6875rem;letter-spacing:.06em;color:var(--ink-2);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
-.hotel-foot{
-  margin-top:auto;padding-top:18px;border-top:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;
+.rail::-webkit-scrollbar{display:none}
+.card{
+  position:relative;flex:0 0 78vw;max-width:420px;aspect-ratio:3/4;border-radius:20px;overflow:hidden;
+  scroll-snap-align:start;isolation:isolate;
 }
-.price .from{display:block;font-size:.625rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
-.price .amt{font-family:var(--serif);font-weight:500;font-size:1.375rem;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.price .per{font-size:.75rem;color:var(--ink-3)}
-.acts{display:flex;gap:8px;align-items:center}
-.btn{
-  font-family:var(--sans);cursor:pointer;font-size:.6875rem;font-weight:500;
-  letter-spacing:.15em;text-transform:uppercase;padding:11px 20px;border-radius:2px;
-  text-decoration:none;display:inline-block;transition:background .2s,color .2s,border-color .2s;
+@media(min-width:760px){.card{flex-basis:33vw}}
+.card .fill{position:absolute;inset:-4%;transition:transform 1.1s var(--ease)}
+.card:hover .fill{transform:scale(1.06)}
+.card::after{
+  content:"";position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top,rgba(9,9,11,.88) 0%,rgba(9,9,11,.34) 46%,rgba(9,9,11,0) 76%);
 }
-.btn-solid{background:var(--lapis-800);color:#F3EDE0;border:1px solid var(--lapis-800)}
-.btn-solid:hover{background:var(--lapis-600);border-color:var(--lapis-600)}
-.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
-.btn-ghost:hover{border-color:var(--lapis-800);color:var(--lapis-800)}
-.btn-gold{background:var(--gold-500);color:var(--lapis-900);border:1px solid var(--gold-500)}
-.btn-gold:hover{background:var(--gold-300);border-color:var(--gold-300)}
-.btn-onlapis{background:transparent;color:var(--gold-300);border:1px solid rgba(229,204,147,.5)}
-.btn-onlapis:hover{background:var(--gold-500);color:var(--lapis-900);border-color:var(--gold-500)}
+.d-cai{background:radial-gradient(110% 90% at 30% 20%,#463527 0%,#1D1712 50%,#0A0908 100%)}
+.d-alx{background:radial-gradient(110% 90% at 70% 25%,#233A45 0%,#132029 50%,#080D11 100%)}
+.d-rsg{background:radial-gradient(110% 90% at 45% 70%,#1F4A48 0%,#102A2A 50%,#070F0F 100%)}
+.card-txt{position:absolute;z-index:3;inset-block-end:0;inset-inline:0;padding:26px;display:flex;flex-direction:column;gap:6px}
+.card-txt .n{font-family:var(--serif);font-size:2rem;line-height:1;letter-spacing:-.02em}
+.card-txt .m{font-size:.75rem;color:var(--dim);letter-spacing:.05em}
 
-/* ---------- destination tiles ---------- */
-.dest{position:relative;display:block;text-decoration:none;border-radius:4px;overflow:hidden;aspect-ratio:3/4;isolation:isolate}
-.dest .lattice{opacity:.42}
-.dest .scrim{
-  position:absolute;inset:0;z-index:3;
-  background:linear-gradient(to top,rgba(6,32,60,.92) 0%,rgba(6,32,60,.48) 44%,rgba(6,32,60,.05) 80%);
-}
-.dest-txt{position:absolute;inset-inline:0;inset-block-end:0;z-index:4;padding:26px;display:flex;flex-direction:column;gap:5px}
-.dest-txt .nm{font-family:var(--serif);font-weight:500;font-size:1.625rem;color:#FFF;line-height:1.1}
-.dest-txt .ct{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold-300)}
-.dest:hover .lattice{opacity:.62}
-@media (min-width:900px){.dest{aspect-ratio:4/5}}
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:clamp(24px,3vw,48px);border-block:1px solid var(--line);padding-block:clamp(44px,5vw,72px)}
+.stat{display:flex;flex-direction:column;gap:6px}
+.stat b{font-family:var(--serif);font-weight:400;font-size:clamp(2.6rem,5vw,4.2rem);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat span{font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim-2)}
 
-/* ---------- offers ---------- */
+/* ---------- feature panel ---------- */
+.feature{position:relative;min-height:88svh;display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
+.feature .fill{position:absolute;inset:-14% 0;will-change:transform}
+.f-dine{background:radial-gradient(90% 80% at 30% 30%,#4A2A24 0%,#20120F 48%,#0A0606 100%)}
+.feature::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(9,9,11,.94) 0%,rgba(9,9,11,.42) 48%,rgba(9,9,11,.22) 100%);
+}
+.feature .wrap{position:relative;z-index:3;padding-block:clamp(48px,6vw,90px)}
+.feature-copy{display:flex;flex-direction:column;gap:22px;max-width:34ch}
+
+/* ---------- light section ---------- */
+.light{background:var(--bone);color:var(--ink)}
+.light .tag{color:rgba(9,9,11,.42)}
+.light .lede,.light p{color:rgba(9,9,11,.62)}
+.light .d2 em{color:#9A6C3E}
+.offers{display:grid;grid-template-columns:repeat(auto-fit,minmax(276px,1fr));gap:clamp(16px,2vw,28px)}
 .offer{
-  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:4px;
-  padding:30px 26px 28px;display:flex;flex-direction:column;gap:12px;overflow:hidden;
+  background:rgba(9,9,11,.035);border:1px solid rgba(9,9,11,.09);border-radius:18px;
+  padding:clamp(26px,2.6vw,36px);display:flex;flex-direction:column;gap:12px;
+  transition:transform .5s var(--ease),background .5s var(--ease);
 }
-.offer-corner{position:absolute;inset-block-start:0;inset-inline-end:0;width:88px;height:88px;opacity:.5;pointer-events:none}
-.offer .code{
-  margin-top:6px;padding-top:14px;border-top:1px solid var(--line);
-  font-size:.75rem;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-600);font-weight:500;
+.offer:hover{transform:translateY(-5px);background:rgba(9,9,11,.06)}
+.offer .w{font-size:.6875rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(9,9,11,.42);font-weight:500}
+.offer h3{font-family:var(--serif);font-size:1.6rem;line-height:1.1;letter-spacing:-.02em}
+.offer p{font-size:.9375rem;font-weight:300;line-height:1.6}
+.offer .c{
+  margin-top:auto;padding-top:18px;border-top:1px solid rgba(9,9,11,.1);
+  font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#9A6C3E;font-weight:500;
 }
-.offer .valid{font-size:.75rem;color:var(--ink-3);letter-spacing:.05em}
-.offer p{font-size:.9375rem;color:var(--ink-2)}
-.offer .h3{font-size:1.1875rem}
 
-/* ---------- editorial split ---------- */
-.split{display:grid;grid-template-columns:1fr;gap:0;align-items:stretch}
-@media (min-width:880px){.split{grid-template-columns:1.05fr 1fr}}
-.split-media{position:relative;min-height:380px;isolation:isolate}
-.split-media .lattice{opacity:.45}
-.split-txt{
-  display:flex;flex-direction:column;justify-content:center;gap:20px;align-items:flex-start;
-  padding:clamp(38px,5vw,72px);
-}
-.split-txt .h2{max-width:15ch}
-.split-txt p{max-width:44ch}
-.split--garnet{background:var(--garnet);color:#F6E9EA}
-.split--garnet p{color:#E2C4C8}
-.split--garnet .eyebrow{color:var(--gold-300)}
-.split--sand{background:var(--sand)}
-.split--sand p{color:var(--ink-2)}
-@media (min-width:880px){.split--rev .split-media{order:2}}
-
-/* ---------- newsletter ---------- */
-.news{text-align:center;display:flex;flex-direction:column;align-items:center;gap:22px}
-.news .h2{max-width:16ch}
-.news p{color:var(--on-lapis-2);max-width:48ch}
-.news-form{display:flex;gap:8px;width:100%;max-width:460px;flex-wrap:wrap}
-.news-form input{
-  flex:1;min-width:200px;font-family:var(--sans);font-size:.9375rem;font-weight:300;
-  padding:14px 18px;border-radius:2px;border:1px solid rgba(243,237,224,.32);
-  background:rgba(243,237,224,.07);color:var(--on-lapis);
-}
-.news-form input::placeholder{color:var(--on-lapis-2);opacity:.7}
-.news-form input:focus{outline:2px solid var(--gold-300);outline-offset:2px;border-color:transparent}
-.consent{font-size:.75rem;color:var(--on-lapis-2);opacity:.8;max-width:46ch}
+/* ---------- events ---------- */
+.evt{display:grid;grid-template-columns:1fr;gap:clamp(30px,4vw,72px);align-items:center}
+@media(min-width:940px){.evt{grid-template-columns:1fr 1fr}}
+.evt-media{position:relative;aspect-ratio:5/4;border-radius:22px;overflow:hidden;background:radial-gradient(110% 90% at 60% 30%,#20303E 0%,#111A22 50%,#080C0F 100%)}
+.evt-copy{display:flex;flex-direction:column;gap:22px;align-items:flex-start}
 
 /* ---------- footer ---------- */
-footer{position:relative;background:var(--lapis-900);color:var(--on-lapis-2);overflow:hidden;isolation:isolate}
-footer > *{position:relative;z-index:2}
-.foot-main{padding-block:clamp(56px,7vw,88px) 40px;display:grid;grid-template-columns:1fr;gap:44px}
-@media (min-width:860px){.foot-main{grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px}}
-.foot-brand{display:flex;flex-direction:column;gap:20px;align-items:flex-start}
-.foot-brand .wordmark{align-items:flex-start}
-.foot-brand .wordmark .name{font-size:1.625rem}
-.foot-brand p{font-size:.875rem;max-width:34ch;line-height:1.7}
-.socials{display:flex;gap:14px}
-.socials a{
-  width:34px;height:34px;border:1px solid rgba(243,237,224,.22);border-radius:999px;
-  display:grid;place-items:center;text-decoration:none;color:var(--on-lapis-2);
-  font-size:.6875rem;letter-spacing:.02em;transition:border-color .2s,color .2s;
+footer{border-top:1px solid var(--line);background:var(--ink)}
+.foot{display:grid;grid-template-columns:1fr;gap:44px;padding-block:clamp(56px,7vw,96px) 40px}
+@media(min-width:900px){.foot{grid-template-columns:1.6fr 1fr 1fr 1fr}}
+.foot-brand{display:flex;flex-direction:column;gap:22px;align-items:flex-start}
+.foot-brand p{color:var(--dim);max-width:32ch;font-size:.9375rem;font-weight:200}
+.soc{display:flex;gap:10px}
+.soc a{
+  width:38px;height:38px;border:1px solid var(--line);border-radius:100px;display:grid;place-items:center;
+  font-size:.6875rem;color:var(--dim);transition:border-color .35s,color .35s,transform .35s var(--ease);
 }
-.socials a:hover{border-color:var(--gold-500);color:var(--gold-300)}
-.foot-col h3{
-  font-family:var(--sans);font-size:.6875rem;font-weight:500;letter-spacing:.19em;
-  text-transform:uppercase;color:var(--gold-500);margin-bottom:16px;
-}
-.foot-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.foot-col a{font-size:.875rem;text-decoration:none;opacity:.82;transition:opacity .2s,color .2s}
-.foot-col a:hover{opacity:1;color:var(--gold-300)}
-.foot-bar{
-  border-top:1px solid rgba(243,237,224,.14);padding-block:22px;
-  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:.75rem;opacity:.7;
-}
-.foot-bar [lang="ar"]{font-family:var(--arab)}
+.soc a:hover{border-color:var(--sand);color:var(--sand);transform:translateY(-2px)}
+.fcol h3{font-size:.6875rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-2);margin-bottom:18px}
+.fcol ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.fcol a{font-size:.9375rem;color:var(--dim);font-weight:300;transition:color .3s}
+.fcol a:hover{color:var(--bone)}
+.fbar{border-top:1px solid var(--line);padding-block:24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--dim-2)}
+.fbar [lang="ar"]{font-family:var(--arab)}
 
-/* ---------- mockup note ---------- */
-.note{background:var(--sand);border-top:1px solid var(--line);padding-block:34px;font-size:.8125rem;color:var(--ink-2)}
-.note .wrap{display:flex;flex-direction:column;gap:8px}
-.note strong{color:var(--ink);font-weight:500}
-.note p{max-width:78ch}
+/* ---------- note ---------- */
+.note{background:var(--ink-3);border-top:1px solid var(--line);padding-block:38px;font-size:.875rem;color:var(--dim)}
+.note .wrap{display:flex;flex-direction:column;gap:10px;max-width:900px}
+.note b{color:var(--bone);font-weight:500}
+.note code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8125em;color:var(--sand);background:rgba(205,165,122,.09);padding:2px 6px;border-radius:4px}
 
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::after,*::before{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+  .reveal-line > span{transform:none;opacity:1}
+  .fade-up{opacity:1;transform:none}
+}
 </style>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <defs>
-    <pattern id="lat" width="72" height="72" patternUnits="userSpaceOnUse">
-      <g fill="none" stroke="#C9A24D" stroke-width="0.7" opacity="0.55">
-        <rect x="16" y="16" width="40" height="40"/>
-        <rect x="16" y="16" width="40" height="40" transform="rotate(45 36 36)"/>
-        <circle cx="36" cy="36" r="20"/>
-        <circle cx="36" cy="36" r="3.2"/>
-        <path d="M36 0v16M36 56v16M0 36h16M56 36h16"/>
-      </g>
-    </pattern>
-    <pattern id="latDense" width="44" height="44" patternUnits="userSpaceOnUse">
-      <g fill="none" stroke="#C9A24D" stroke-width="0.6" opacity="0.6">
-        <rect x="10" y="10" width="24" height="24"/>
-        <rect x="10" y="10" width="24" height="24" transform="rotate(45 22 22)"/>
-        <circle cx="22" cy="22" r="12"/>
-      </g>
-    </pattern>
-  </defs>
+<svg class="grain" aria-hidden="true" focusable="false">
+  <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+  <rect width="100%" height="100%" filter="url(#gr)" opacity="0.5"/>
 </svg>
+<div class="progress" id="prog" aria-hidden="true"></div>
 
-<!-- ============ UTILITY ============ -->
-<div class="utility">
+<!-- ================= NAV ================= -->
+<nav class="nav" id="nav" aria-label="Primary">
   <div class="wrap">
-    <nav class="langs" aria-label="Language">
-      <a href="#" class="on" aria-current="true">English</a>
-      <a href="#" lang="ar">العربية</a>
-      <a href="#">Deutsch</a>
-      <a href="#">Русский</a>
-      <a href="#">Français</a>
-    </nav>
-    <div class="langs">
-      <a href="#">My booking</a>
-      <a href="#">+20 2 2461 8000</a>
+    <a href="#top" class="mark" aria-label="Aten Hotels and Resorts, home">
+      <b>ATEN</b><span>Egypt</span>
+    </a>
+    <div class="nav-links">
+      <a href="#houses">Our Hotels</a>
+      <a href="#places">Destinations</a>
+      <a href="#offers">Offers</a>
+      <a href="#dining">Dining</a>
+      <a href="#events">Meetings</a>
+    </div>
+    <div class="nav-right">
+      <div class="lang">
+        <a href="#" class="on">EN</a>
+        <a href="#" lang="ar">ع</a>
+        <a href="#">DE</a>
+        <a href="#">RU</a>
+      </div>
+      <a href="#" class="btn">Book<span class="ar">→</span></a>
     </div>
   </div>
-</div>
+</nav>
 
-<!-- ============ HERO ============ -->
-<header class="hero">
-  <svg class="lattice" aria-hidden="true" focusable="false" style="opacity:.28"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-
-  <div class="masthead">
-    <div class="wrap">
-      <a href="#" class="wordmark" aria-label="Aten Hotels and Resorts, home">
-        <span class="name">ATEN</span>
-        <span class="sub">Hotels &amp; Resorts · Egypt</span>
-      </a>
-      <nav class="primary" aria-label="Primary">
-        <ul>
-          <li><a href="#hotels">Our Hotels</a></li>
-          <li><a href="#destinations">Destinations</a></li>
-          <li><a href="#offers">Offers</a></li>
-          <li><a href="#dining">Dining</a></li>
-          <li><a href="#events">Meetings &amp; Events</a></li>
-          <li><a href="#">About the Group</a></li>
-        </ul>
-      </nav>
-    </div>
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <!-- Production: <video autoplay muted loop playsinline poster="hero.jpg"><source src="hero.mp4"></video>
+       Here: a canvas light-plate, identical layering, no external asset. -->
+  <div class="plate">
+    <canvas id="plate" aria-hidden="true"></canvas>
   </div>
+  <div class="glow" id="glow" aria-hidden="true"></div>
 
-  <div class="hero-body wrap">
+  <div class="hero-inner wrap">
     <div class="hero-copy">
-      <span class="eyebrow eyebrow--onlapis">Three houses · One Egypt</span>
-      <h1 class="display">The oldest colour in the world</h1>
-      <p class="hero-sub">Egyptian blue was made here five thousand years ago, before anyone else made a colour. We have been in the business of arrival almost as long.</p>
+      <span class="tag fade-up">Cairo · Alexandria · El Gouna</span>
+      <h1 class="d1">
+        <span class="reveal-line"><span>Arrive</span></span>
+        <span class="reveal-line"><span>somewhere</span></span>
+        <span class="reveal-line"><span><em>unhurried</em></span></span>
+      </h1>
+      <p class="lede fade-up">Three houses in Egypt. One reservation, one standard of welcome, and staff who have stayed in all of them.</p>
     </div>
 
-    <form class="search" role="search" aria-label="Check availability" onsubmit="return false">
-      <div class="field" tabindex="0" role="button">
-        <span class="lbl">Destination or hotel</span>
-        <span class="val">All hotels</span>
-      </div>
-      <div class="field" tabindex="0" role="button">
-        <span class="lbl">Dates</span>
-        <span class="val">12 – 15 Nov 2026</span>
-      </div>
-      <div class="field" tabindex="0" role="button">
-        <span class="lbl">Guests &amp; rooms</span>
-        <span class="val dim">2 adults · 1 room</span>
-      </div>
-      <button class="btn-search" type="submit">Search</button>
+    <form class="search fade-up" role="search" aria-label="Check availability" onsubmit="return false">
+      <button class="fld" type="button"><span class="k">Where</span><span class="v">All hotels</span></button>
+      <button class="fld" type="button"><span class="k">When</span><span class="v">12 – 15 Nov</span></button>
+      <button class="fld" type="button"><span class="k">Who</span><span class="v">2 adults · 1 room</span></button>
+      <button class="btn btn--sand" type="submit">Search<span class="ar">→</span></button>
     </form>
-    <p class="promo-line">Have a promo or corporate code? <button type="button">Add it</button></p>
+
+    <div class="cue fade-up"><i></i> Scroll</div>
   </div>
 </header>
 
-<!-- ============ STATEMENT ============ -->
-<section>
-  <div class="wrap statement">
-    <span class="eyebrow">Our promise</span>
-    <h2 class="h2">Every stay is arranged by the same people, and confirmed in the same place</h2>
-    <span class="rule-gold"></span>
-    <p>From a garden terrace above the Nile to the quiet end of a Red Sea reef, three houses share one standard of welcome — and one booking, whichever you choose.</p>
+<!-- ================= MANIFESTO ================= -->
+<section class="pad">
+  <div class="wrap manifesto">
+    <h2 class="d2 rv">Not a chain. Three <em>houses</em>.</h2>
+    <div class="mf-body">
+      <p class="rv" style="--d:.08s">A chain makes every room the same so you always know what you are getting. We went the other way — a 1930s villa above the Nile, a sea-facing landmark on the Corniche, and low white buildings on a Red Sea lagoon have <em>no business resembling each other</em>.</p>
+      <p class="rv" style="--d:.16s">What they share is the part you cannot photograph: one reservations desk, one set of standards, and one booking whichever you choose.</p>
+      <a href="#" class="btn rv" style="--d:.24s">About the group<span class="ar">→</span></a>
+    </div>
   </div>
 </section>
 
-<!-- ============ HOTELS ============ -->
-<section id="hotels">
+<!-- ================= HOUSES ================= -->
+<section class="pad" id="houses" style="padding-top:0">
   <div class="wrap">
-    <div class="sec-head sec-head--split">
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <span class="eyebrow">The collection</span>
-        <h2 class="h2">Three houses, each with its own weather</h2>
+    <div class="head head--row">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <span class="tag rv">The collection</span>
+        <h2 class="d2 rv" style="--d:.06s">Three addresses</h2>
       </div>
-      <a href="#" class="link-more">Compare all hotels</a>
+      <a href="#" class="btn rv" style="--d:.12s">Compare all<span class="ar">→</span></a>
     </div>
 
-    <div class="grid-3">
+    <div class="hotels">
 
-      <article class="hotel">
-        <div class="slot slot-cai">
-          <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-          <span class="badge">Garden City</span>
-        </div>
-        <div class="hotel-body">
-          <div class="hotel-meta"><span>Cairo</span><span class="stars">★★★★★</span></div>
-          <h3 class="hotel-name">Aten Cairo</h3>
-          <p>A 1930s villa and a quiet tower above the Nile, ten minutes from the Museum and a world away from the traffic.</p>
-          <div class="chips"><span class="chip">Nile view</span><span class="chip">Rooftop pool</span><span class="chip">Spa</span></div>
-          <div class="hotel-foot">
-            <div class="price">
-              <span class="from">From</span>
-              <span class="amt">EGP 6,400</span> <span class="per">/ night</span>
-            </div>
-            <div class="acts">
-              <a href="#" class="btn btn-ghost">Explore</a>
-              <a href="#" class="btn btn-solid">Book</a>
-            </div>
+      <article class="house rv">
+        <div class="house-media"><div class="fill f-cai"></div><span class="geo">30.0362° N · 31.2290° E</span></div>
+        <div class="house-body">
+          <div class="row"><span class="tag tag--sand">Cairo</span><span class="tag">Garden City</span></div>
+          <h3 class="d3">Aten Cairo</h3>
+          <p>A 1930s villa and a quiet tower above the Nile, ten minutes from the Museum and a world away from the traffic that gets there.</p>
+          <div class="facts"><span class="fact">86 rooms</span><span class="fact">Nile view</span><span class="fact">Rooftop pool</span><span class="fact">Spa</span></div>
+          <div class="house-foot">
+            <div class="rate"><span class="k">From</span><span class="v">EGP 6,400</span> <span class="u">/ night</span></div>
+            <a href="#" class="btn">Explore<span class="ar">→</span></a>
           </div>
         </div>
       </article>
 
-      <article class="hotel">
-        <div class="slot slot-alx">
-          <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-          <span class="badge">Corniche</span>
-        </div>
-        <div class="hotel-body">
-          <div class="hotel-meta"><span>Alexandria</span><span class="stars">★★★★★</span></div>
-          <h3 class="hotel-name">Aten Alexandria</h3>
-          <p>Sea-facing rooms on the old Corniche, with a library bar that keeps the city's Mediterranean habits alive.</p>
-          <div class="chips"><span class="chip">Sea view</span><span class="chip">Library bar</span><span class="chip">Private beach</span></div>
-          <div class="hotel-foot">
-            <div class="price">
-              <span class="from">From</span>
-              <span class="amt">EGP 4,900</span> <span class="per">/ night</span>
-            </div>
-            <div class="acts">
-              <a href="#" class="btn btn-ghost">Explore</a>
-              <a href="#" class="btn btn-solid">Book</a>
-            </div>
+      <article class="house rv" style="--d:.08s">
+        <div class="house-media"><div class="fill f-alx"></div><span class="geo">31.2001° N · 29.9187° E</span></div>
+        <div class="house-body">
+          <div class="row"><span class="tag tag--sand">Alexandria</span><span class="tag">Corniche</span></div>
+          <h3 class="d3">Aten Alexandria</h3>
+          <p>Sea-facing rooms on the old Corniche, and a library bar that keeps the city's Mediterranean habits going long after the season ends.</p>
+          <div class="facts"><span class="fact">64 rooms</span><span class="fact">Sea view</span><span class="fact">Library bar</span><span class="fact">Private beach</span></div>
+          <div class="house-foot">
+            <div class="rate"><span class="k">From</span><span class="v">EGP 4,900</span> <span class="u">/ night</span></div>
+            <a href="#" class="btn">Explore<span class="ar">→</span></a>
           </div>
         </div>
       </article>
 
-      <article class="hotel">
-        <div class="slot slot-rsg">
-          <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-          <span class="badge">Red Sea</span>
-        </div>
-        <div class="hotel-body">
-          <div class="hotel-meta"><span>El Gouna</span><span class="stars">★★★★★</span></div>
-          <h3 class="hotel-name">Aten El Gouna</h3>
-          <p>Low white buildings on a lagoon, a house reef at the end of the jetty, and nothing much to do about it.</p>
-          <div class="chips"><span class="chip">House reef</span><span class="chip">Half board</span><span class="chip">Kids club</span></div>
-          <div class="hotel-foot">
-            <div class="price">
-              <span class="from">From</span>
-              <span class="amt">EGP 5,750</span> <span class="per">/ night</span>
-            </div>
-            <div class="acts">
-              <a href="#" class="btn btn-ghost">Explore</a>
-              <a href="#" class="btn btn-solid">Book</a>
-            </div>
+      <article class="house rv" style="--d:.08s">
+        <div class="house-media"><div class="fill f-rsg"></div><span class="geo">27.3958° N · 33.6801° E</span></div>
+        <div class="house-body">
+          <div class="row"><span class="tag tag--sand">El Gouna</span><span class="tag">Red Sea</span></div>
+          <h3 class="d3">Aten El Gouna</h3>
+          <p>Low white buildings on a lagoon, a house reef at the end of the jetty, and very little you are expected to do about any of it.</p>
+          <div class="facts"><span class="fact">120 rooms</span><span class="fact">House reef</span><span class="fact">Half board</span><span class="fact">Kids club</span></div>
+          <div class="house-foot">
+            <div class="rate"><span class="k">From</span><span class="v">EGP 5,750</span> <span class="u">/ night</span></div>
+            <a href="#" class="btn">Explore<span class="ar">→</span></a>
           </div>
         </div>
       </article>
@@ -569,188 +474,242 @@ footer > *{position:relative;z-index:2}
   </div>
 </section>
 
-<!-- ============ DESTINATIONS ============ -->
-<section id="destinations" class="band on-lapis">
-  <svg class="lattice" aria-hidden="true" focusable="false" style="opacity:.20"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
+<!-- ================= DESTINATIONS ================= -->
+<section class="pad" id="places" style="padding-top:0">
   <div class="wrap">
-    <div class="sec-head sec-head--split">
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <span class="eyebrow eyebrow--onlapis">Where we are</span>
-        <h2 class="h2">Three cities that do not resemble each other</h2>
-      </div>
-      <a href="#" class="link-more">All destinations</a>
+    <div class="head">
+      <span class="tag rv">Where we are</span>
+      <h2 class="d2 rv" style="--d:.06s">Three cities that do not <em>resemble</em> each other</h2>
     </div>
+  </div>
+  <div class="rail rv" style="--d:.1s">
+    <a href="#" class="card"><div class="fill d-cai"></div><span class="card-txt"><span class="n">Cairo</span><span class="m">One house · the Nile, the Museum, the noise</span></span></a>
+    <a href="#" class="card"><div class="fill d-alx"></div><span class="card-txt"><span class="n">Alexandria</span><span class="m">One house · Mediterranean, and slower</span></span></a>
+    <a href="#" class="card"><div class="fill d-rsg"></div><span class="card-txt"><span class="n">El Gouna</span><span class="m">One house · reef, lagoon, nothing scheduled</span></span></a>
+  </div>
+</section>
 
-    <div class="grid-3">
-      <a href="#" class="dest">
-        <div class="slot-dst1" style="position:absolute;inset:0"></div>
-        <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="scrim"></span>
-        <span class="dest-txt"><span class="nm">Cairo</span><span class="ct">One hotel · 1,100 km of city</span></span>
-      </a>
-      <a href="#" class="dest">
-        <div class="slot-dst2" style="position:absolute;inset:0"></div>
-        <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="scrim"></span>
-        <span class="dest-txt"><span class="nm">Alexandria</span><span class="ct">One hotel · Mediterranean</span></span>
-      </a>
-      <a href="#" class="dest">
-        <div class="slot-dst3" style="position:absolute;inset:0"></div>
-        <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="scrim"></span>
-        <span class="dest-txt"><span class="nm">El Gouna</span><span class="ct">One hotel · Red Sea</span></span>
-      </a>
+<!-- ================= STATS ================= -->
+<section style="padding-block:0 var(--rhythm)">
+  <div class="wrap">
+    <div class="stats rv">
+      <div class="stat"><b data-count="3">0</b><span>Houses</span></div>
+      <div class="stat"><b data-count="270">0</b><span>Rooms &amp; suites</span></div>
+      <div class="stat"><b data-count="9">0</b><span>Kitchens</span></div>
+      <div class="stat"><b data-count="31">0</b><span>Years open</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============ OFFERS ============ -->
-<section id="offers" class="band-sand">
+<!-- ================= DINING ================= -->
+<section class="feature" id="dining">
+  <div class="fill f-dine" data-parallax="0.16"></div>
   <div class="wrap">
-    <div class="sec-head sec-head--split">
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <span class="eyebrow">Booked direct</span>
-        <h2 class="h2">Rates you will not find anywhere else</h2>
-      </div>
-      <a href="#" class="link-more">All offers</a>
+    <div class="feature-copy">
+      <span class="tag tag--sand rv">At the table</span>
+      <h2 class="d2 rv" style="--d:.06s">Nine kitchens, and one of them is a <em>roof</em></h2>
+      <p class="lede rv" style="--d:.12s">A Levantine grill under the Cairo skyline. A fish counter that buys off the Alexandria boats at six each morning. Our restaurants are open to the city, not only to the house.</p>
+      <a href="#" class="btn btn--sand rv" style="--d:.18s">Reserve a table<span class="ar">→</span></a>
     </div>
+  </div>
+</section>
 
-    <div class="grid-3">
-      <article class="offer">
-        <svg class="offer-corner" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="valid">Until 20 December 2026</span>
-        <h3 class="h3">Three nights, pay for two</h3>
-        <p>Stay three consecutive nights at any Aten house and the third is on us, breakfast included throughout.</p>
-        <span class="code">Code · ATEN3</span>
+<!-- ================= OFFERS ================= -->
+<section class="pad light" id="offers">
+  <div class="wrap">
+    <div class="head head--row">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <span class="tag rv">Booked direct</span>
+        <h2 class="d2 rv" style="--d:.06s">Rates you will not find <em>anywhere else</em></h2>
+      </div>
+      <a href="#" class="btn btn--ink rv" style="--d:.12s">All offers<span class="ar">→</span></a>
+    </div>
+    <div class="offers">
+      <article class="offer rv">
+        <span class="w">Until 20 December</span>
+        <h3>Three nights, pay for two</h3>
+        <p>Stay three consecutive nights at any house and the third is on us, breakfast included throughout.</p>
+        <span class="c">Code · ATEN3</span>
       </article>
-      <article class="offer">
-        <svg class="offer-corner" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="valid">Year-round</span>
-        <h3 class="h3">Book direct, save 15%</h3>
-        <p>Fifteen per cent below every other channel, with late checkout at 4pm whenever the house can manage it.</p>
-        <span class="code">Code · DIRECT15</span>
+      <article class="offer rv" style="--d:.08s">
+        <span class="w">Year-round</span>
+        <h3>Book direct, save 15%</h3>
+        <p>Fifteen per cent below every other channel, with checkout at four whenever the house can manage it.</p>
+        <span class="c">Code · DIRECT15</span>
       </article>
-      <article class="offer">
-        <svg class="offer-corner" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#latDense)"/></svg>
-        <span class="valid">Sunday to Wednesday</span>
-        <h3 class="h3">The long weekend, extended</h3>
+      <article class="offer rv" style="--d:.16s">
+        <span class="w">Sunday to Wednesday</span>
+        <h3>The long weekend, extended</h3>
         <p>Midweek rates at El Gouna and Alexandria, with half board and a dive or a sail included per stay.</p>
-        <span class="code">Code · MIDWEEK</span>
+        <span class="c">Code · MIDWEEK</span>
       </article>
     </div>
   </div>
 </section>
 
-<!-- ============ DINING ============ -->
-<section id="dining" style="padding:0">
-  <div class="split split--garnet">
-    <div class="split-media slot-dine">
-      <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-    </div>
-    <div class="split-txt">
-      <span class="eyebrow">At the table</span>
-      <h2 class="h2">Nine kitchens, and one of them is a roof</h2>
-      <p>From a Levantine grill under the Cairo skyline to a fish counter that buys off the Alexandria boats each morning — our restaurants are open to the city, not only to the house.</p>
-      <a href="#" class="btn btn-gold">Reserve a table</a>
+<!-- ================= EVENTS ================= -->
+<section class="pad" id="events">
+  <div class="wrap evt">
+    <div class="evt-media rv"></div>
+    <div class="evt-copy">
+      <span class="tag rv">Meetings &amp; events</span>
+      <h2 class="d2 rv" style="--d:.06s">One brief. Three houses. <em>One</em> answer.</h2>
+      <p class="lede rv" style="--d:.12s">Send a single request and every property that fits comes back to you — capacities, rates, and dates in one reply, instead of three separate conversations that contradict each other.</p>
+      <a href="#" class="btn rv" style="--d:.18s">Send a request<span class="ar">→</span></a>
     </div>
   </div>
 </section>
 
-<!-- ============ EVENTS ============ -->
-<section id="events" style="padding:0">
-  <div class="split split--sand split--rev">
-    <div class="split-media slot-meet">
-      <svg class="lattice" aria-hidden="true" focusable="false"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-    </div>
-    <div class="split-txt">
-      <span class="eyebrow">Meetings &amp; events</span>
-      <h2 class="h2">One brief, three houses, one answer</h2>
-      <p>Send a single request and every property that fits will come back to you — capacities, rates, and dates, in one reply rather than three conversations.</p>
-      <a href="#" class="btn btn-solid">Send a request</a>
-    </div>
-  </div>
-</section>
-
-<!-- ============ NEWSLETTER ============ -->
-<section class="band on-lapis">
-  <svg class="lattice" aria-hidden="true" focusable="false" style="opacity:.16"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
-  <div class="wrap news">
-    <span class="eyebrow eyebrow--onlapis">Stay in touch</span>
-    <h2 class="h2">Rates and openings, before anyone else</h2>
-    <p>A short letter, roughly monthly. New suites, quiet-season rates, and the occasional thing worth flying for.</p>
-    <form class="news-form" onsubmit="return false">
-      <label for="nl" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email address</label>
-      <input id="nl" type="email" placeholder="your@email.com" autocomplete="email">
-      <button type="submit" class="btn btn-gold" style="border:none">Subscribe</button>
-    </form>
-    <p class="consent">We will use your address for this letter only, and you can leave at the bottom of any of them.</p>
-  </div>
-</section>
-
-<!-- ============ FOOTER ============ -->
+<!-- ================= FOOTER ================= -->
 <footer>
-  <svg class="lattice" aria-hidden="true" focusable="false" style="opacity:.12"><rect width="100%" height="100%" fill="url(#lat)"/></svg>
   <div class="wrap">
-    <div class="foot-main">
+    <div class="foot">
       <div class="foot-brand">
-        <a href="#" class="wordmark" aria-label="Aten Hotels and Resorts, home">
-          <span class="name" style="color:var(--gold-500)">ATEN</span>
-          <span class="sub">Hotels &amp; Resorts · Egypt</span>
-        </a>
-        <p>Three houses in Cairo, Alexandria, and El Gouna. Reservations answered by people who have stayed in all of them.</p>
-        <div class="socials">
+        <a href="#top" class="mark" aria-label="Aten Hotels and Resorts, home"><b>ATEN</b><span>Egypt</span></a>
+        <p>Three houses in Cairo, Alexandria, and El Gouna. Reservations answered by people, between 8am and midnight.</p>
+        <div class="soc">
           <a href="#" aria-label="Instagram">IG</a>
           <a href="#" aria-label="Facebook">FB</a>
           <a href="#" aria-label="LinkedIn">IN</a>
           <a href="#" aria-label="YouTube">YT</a>
         </div>
       </div>
-
-      <div class="foot-col">
-        <h3>Hotels</h3>
-        <ul>
-          <li><a href="#">Aten Cairo</a></li>
-          <li><a href="#">Aten Alexandria</a></li>
-          <li><a href="#">Aten El Gouna</a></li>
-          <li><a href="#">Rooms &amp; suites</a></li>
-          <li><a href="#">Offers</a></li>
-        </ul>
-      </div>
-
-      <div class="foot-col">
-        <h3>The group</h3>
-        <ul>
-          <li><a href="#">About us</a></li>
-          <li><a href="#">Meetings &amp; events</a></li>
-          <li><a href="#">Restaurants &amp; bars</a></li>
-          <li><a href="#">Careers</a></li>
-          <li><a href="#">Press</a></li>
-        </ul>
-      </div>
-
-      <div class="foot-col">
-        <h3>Support</h3>
-        <ul>
-          <li><a href="#">My booking</a></li>
-          <li><a href="#">Contact</a></li>
-          <li><a href="#">Cancellation policy</a></li>
-          <li><a href="#">Terms &amp; conditions</a></li>
-          <li><a href="#">Privacy</a></li>
-        </ul>
-      </div>
+      <div class="fcol"><h3>Hotels</h3><ul>
+        <li><a href="#">Aten Cairo</a></li><li><a href="#">Aten Alexandria</a></li>
+        <li><a href="#">Aten El Gouna</a></li><li><a href="#">Rooms &amp; suites</a></li>
+      </ul></div>
+      <div class="fcol"><h3>The group</h3><ul>
+        <li><a href="#">About us</a></li><li><a href="#">Meetings &amp; events</a></li>
+        <li><a href="#">Restaurants</a></li><li><a href="#">Careers</a></li>
+      </ul></div>
+      <div class="fcol"><h3>Support</h3><ul>
+        <li><a href="#">My booking</a></li><li><a href="#">Contact</a></li>
+        <li><a href="#">Cancellation</a></li><li><a href="#">Privacy</a></li>
+      </ul></div>
     </div>
-
-    <div class="foot-bar">
-      <span>© 2026 Aten Hotel Group · Cairo, Egypt</span>
-      <span>English · <span lang="ar">العربية</span> · Deutsch · Русский · Français</span>
+    <div class="fbar">
+      <span>© 2026 Aten Hotel Group · Cairo</span>
+      <span>English · <span lang="ar">العربية</span> · Deutsch · Русский</span>
     </div>
   </div>
 </footer>
 
-<!-- ============ NOTE ============ -->
 <aside class="note">
   <div class="wrap">
-    <p><strong>Design mockup — Lapis &amp; Gold.</strong> “Aten”, the three properties, and all copy are placeholders; every one of them is a database entity, editable from the admin panel. Photography is not placed yet: each image slot renders as a lapis-to-gold field under the gold lattice, which is the point of a colour-led identity — the site is complete and reviewable before the shoot.</p>
-    <p>Type is Bodoni Moda and Jost, with Tajawal for Arabic. Roughly 40% of this page sits on a lapis ground. Try it in dark mode, and at phone width.</p>
+    <p><b>Design mockup — second direction.</b> Palette cut from eight colours to three: ink, bone, and one sand accent used about three times a screen. Type is Instrument Serif and Manrope; the Bodoni and the ornament are gone, which is what made the first pass read as heritage.</p>
+    <p><b>The hero is the real video layout.</b> Markup, layering, and overlays are exactly what ships — production swaps one element for <code>&lt;video autoplay muted loop playsinline poster&gt;</code>. The moving light plate here is a canvas, because this preview cannot load an external file.</p>
+    <p>Working: glass nav on scroll, staggered scroll reveals, parallax on the dining panel, cursor light in the hero, counting stats, scroll-snap gallery, film grain. Brand and copy are placeholders — all database entities in the real system.</p>
   </div>
 </aside>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- sticky nav ---- */
+  var nav = document.getElementById('nav'), prog = document.getElementById('prog');
+  function onScroll(){
+    var y = window.scrollY || 0;
+    nav.classList.toggle('stuck', y > 60);
+    var h = document.documentElement.scrollHeight - innerHeight;
+    prog.style.width = (h > 0 ? (y / h) * 100 : 0) + '%';
+  }
+  addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  /* ---- scroll reveals ---- */
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:.12, rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+
+  /* ---- counting stats ---- */
+  var sio = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      sio.unobserve(e.target);
+      var el = e.target, target = +el.dataset.count, t0 = performance.now(), dur = 1400;
+      if(reduce){ el.textContent = target; return; }
+      (function step(t){
+        var p = Math.min((t - t0)/dur, 1), eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * eased);
+        if(p < 1) requestAnimationFrame(step);
+      })(t0);
+    });
+  }, {threshold:.6});
+  document.querySelectorAll('[data-count]').forEach(function(el){ sio.observe(el); });
+
+  /* ---- parallax ---- */
+  var px = [].slice.call(document.querySelectorAll('[data-parallax]'));
+  if(px.length && !reduce){
+    var ticking = false;
+    function frame(){
+      px.forEach(function(el){
+        var r = el.parentElement.getBoundingClientRect();
+        if(r.bottom < -200 || r.top > innerHeight + 200) return;
+        var mid = r.top + r.height/2 - innerHeight/2;
+        el.style.transform = 'translate3d(0,' + (-mid * +el.dataset.parallax) + 'px,0)';
+      });
+      ticking = false;
+    }
+    addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(frame); } }, {passive:true});
+    frame();
+  }
+
+  /* ---- hero cursor light ---- */
+  var glow = document.getElementById('glow'), hero = document.getElementById('top');
+  if(!reduce && matchMedia('(pointer:fine)').matches){
+    hero.addEventListener('pointermove', function(e){
+      var r = hero.getBoundingClientRect();
+      glow.style.left = (e.clientX - r.left) + 'px';
+      glow.style.top  = (e.clientY - r.top)  + 'px';
+      glow.style.opacity = 1;
+    });
+    hero.addEventListener('pointerleave', function(){ glow.style.opacity = 0; });
+  }
+
+  /* ---- hero light plate (stands in for the video) ---- */
+  var cv = document.getElementById('plate'), ctx = cv.getContext('2d');
+  var blobs = [
+    {x:.24,y:.30,r:.44,c:[214,142, 78],s:.00021,p:0.0},
+    {x:.72,y:.24,r:.38,c:[176, 92, 54],s:.00017,p:1.7},
+    {x:.56,y:.72,r:.50,c:[ 40, 84, 96],s:.00013,p:3.1},
+    {x:.14,y:.78,r:.34,c:[ 96, 60, 44],s:.00019,p:4.4},
+    {x:.88,y:.62,r:.30,c:[210,170,120],s:.00023,p:5.6}
+  ];
+  function size(){
+    var d = Math.min(devicePixelRatio || 1, 1.5);
+    cv.width  = Math.max(1, Math.round(innerWidth  * .38 * d));
+    cv.height = Math.max(1, Math.round(innerHeight * .38 * d));
+  }
+  size(); addEventListener('resize', size);
+
+  function draw(t){
+    var w = cv.width, h = cv.height;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#09090B';
+    ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation = 'screen';
+    blobs.forEach(function(b){
+      var dx = Math.sin(t * b.s + b.p) * .13,
+          dy = Math.cos(t * b.s * .78 + b.p) * .10,
+          cx = (b.x + dx) * w, cy = (b.y + dy) * h,
+          rr = b.r * Math.max(w,h) * (0.9 + Math.sin(t * b.s * 1.6 + b.p) * 0.1),
+          g  = ctx.createRadialGradient(cx,cy,0,cx,cy,rr);
+      g.addColorStop(0,   'rgba(' + b.c[0] + ',' + b.c[1] + ',' + b.c[2] + ',0.62)');
+      g.addColorStop(0.55,'rgba(' + b.c[0] + ',' + b.c[1] + ',' + b.c[2] + ',0.16)');
+      g.addColorStop(1,   'rgba(' + b.c[0] + ',' + b.c[1] + ',' + b.c[2] + ',0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx,cy,rr,0,6.2832); ctx.fill();
+    });
+  }
+
+  if(reduce){ draw(0); }
+  else {
+    var last = 0;
+    (function loop(t){
+      if(!document.hidden && t - last > 33){ draw(t); last = t; }
+      requestAnimationFrame(loop);
+    })(0);
+  }
+})();
+</script>

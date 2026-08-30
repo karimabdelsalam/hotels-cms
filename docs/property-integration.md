@@ -264,33 +264,99 @@ External identifiers are stored verbatim and never regenerated. Unmapped codes a
 from an ARI sync surface in admin as **needs mapping** rather than being silently dropped —
 silent drops are how inventory quietly disappears from a website.
 
-## 8. Recommendation
+## 8. Building our own booking engine, on OPERA directly
 
-Given what is now confirmed — one multi-property OPERA, OXI licensed, a channel manager
-being selected, and no booking engine under contract — the path is clear:
+This is the chosen direction, and it is the right one: it keeps the checkout inside our own
+design and removes a per-booking fee to a vendor. What follows is how it actually connects,
+and what has to be true for it to work.
 
-**Integrate through the channel manager's direct-booking API, in native mode, for all three
-properties.** No network access to the hotel is needed, the CM already carries the OXI
-integration, and one connection serves all three resort codes. Two-stage confirmation keeps
-the guest experience instant while the OPERA confirmation number reconciles behind it.
+### The interfaces OPERA 5.6 on-premise actually exposes
 
-Keep `DelegatedBookingEngineConnector` implemented as insurance, and leave
-`OperaOwsConnector` designed but unbuilt.
+| Interface | Shape | Good for | Not good for |
+| --- | --- | --- | --- |
+| **OWS** (OPERA Web Services) | SOAP/XML, **synchronous** request/response | Live availability, rate lookup, creating, modifying, cancelling reservations, returning a confirmation number in the same call | Nothing — this is the interface built for exactly our use case |
+| **OXI** (OPERA Xchange Interface) | XML business messages, **asynchronous**, queue-based | Continuous ARI sync — rates, availability, restrictions, room and rate codes — pushed to us as they change | A guest waiting inside a checkout for a confirmation number |
+| Direct Oracle DB access | SQL | — | **Never.** Unsupported, voids support, breaks on upgrade, and no write path is safe |
 
-### Still to confirm with the vendor
+OPERA Cloud's REST APIs (OHIP) are the modern answer to all of this, but they do not apply
+to a 5.6 on-premise installation. Worth knowing as the migration path, not as an option now.
 
-Vendor selection between SiteMinder, STAAH, and SmartHOTEL should turn mostly on these, not
-on channel-distribution features:
+### The recommended shape: OXI for inventory, OWS for the transaction
 
-1. **Does the contract include a booking-engine / connectivity API for third-party direct
-   booking** — separate from their own hosted booking engine product? This is the question
-   that decides whether the checkout is ours or theirs.
-2. Are reservation **modification and cancellation** supported through that API, or only
-   creation? This sets the `capabilities` flags and determines whether guests can self-serve.
-3. How are **direct-channel rate plans** scoped and made visible, as distinct from OTA rates?
-4. What is the **ARI push latency**, and is there a pull endpoint for verification?
-5. Is the **OPERA confirmation number** returned through a status callback, or must we poll?
-6. Is **multi-property supported on one account**, with all three resort codes under a single
-   set of credentials?
+```
+   Browsing & search                        Checkout
+   ─────────────────                        ────────
+   guest → our site                         guest → our checkout
+        → InventorySnapshot (Postgres)           → OWS: re-check availability + price
+             ▲                                   → OWS: create reservation
+             │ OXI pushes ARI continuously       → confirmation number returns in the call
+        one multi-property OPERA 5.6        ─────────────────────────────────────────►
+        resort codes: CAI · ALX · RSG              same OPERA
+```
 
-None of this blocks development. Phases 1–3 run entirely on the mock connector.
+Each interface does what it was designed for. **Search never touches OPERA** — it reads a
+snapshot kept current by OXI, so the homepage stays fast and the site survives an OPERA
+outage. **The transaction always touches OPERA** — a live re-check immediately before
+payment, then a real reservation with a real confirmation number, synchronously.
+
+This also solves the oversell problem the pure-cache approach has: the snapshot can be
+slightly stale for browsing, because nothing is committed until OWS confirms live.
+
+### If OWS turns out not to be licensed
+
+OXI alone still works, and this is worth knowing before paying for anything:
+
+- Availability and rates come from the OXI-fed snapshot — no change.
+- Reservation creation becomes an **asynchronous message**. Checkout ends with our booking
+  reference and "we are confirming your stay"; the OPERA confirmation number arrives on a
+  later message and reconciles onto the booking.
+- Modification and cancellation are async the same way.
+- `instantConfirmation: false`, and the capability flags carry it through the UI without
+  conditional logic anywhere else.
+
+The cost is real — a guest who pays and does not immediately get a confirmation number
+converts worse and calls the hotel more — and the mitigation is an allotment buffer per room
+type plus a stop-sell threshold, because the commit is no longer synchronous. Workable, but
+**OWS is worth paying for if the quote is reasonable.** Get the number before deciding.
+
+### What still has to be verified in the actual environment
+
+Per the brief: do not invent endpoints or assume an undocumented API exists. These are
+questions for the Oracle partner or whoever administers the installation.
+
+1. **Is OWS licensed and installed?** If not, what does it cost to add? This is the single
+   decision that shapes the checkout.
+2. **Which OXI interfaces are configured today**, and which message types are enabled —
+   reservation, profile, rate, inventory/availability, blocks?
+3. **Exact version and patch level** of the 5.6 installation.
+4. **Resort codes and chain code** for the three properties.
+5. Is there an existing OXI interface to a channel manager, and **will ours run alongside
+   it** without conflicting on the same message types?
+6. Who owns the OPERA environment operationally, and is there a support contract covering
+   interface configuration changes?
+
+### The thing to get right: two systems writing the same inventory
+
+A channel manager is still needed for OTA distribution — Booking.com and Expedia do not go
+away. So OPERA ends up with two integrations: the CM for OTAs, and ours for direct.
+
+**OPERA has to remain the single source of truth**, with the CM syncing from it. When we
+create a direct booking through OWS, OPERA decrements, and OXI propagates that to the CM so
+OTA availability drops. That is the normal topology, but it makes propagation latency a real
+number to measure rather than assume — it is the width of the oversell window.
+
+If reservations are created over OXI instead of OWS, that window widens by the async delay.
+One more reason OWS is worth the licence.
+
+### What this changes in the plan
+
+- `OperaOwsConnector` and `OxiAriConnector` move from "designed but unbuilt" to the primary
+  build in Phase 4.
+- `ChannelManagerConnector` stays implemented, but for OTA reconciliation rather than as the
+  direct-booking path.
+- Network access now genuinely matters — see §5. The outbound-only on-premise gateway is
+  likely the easiest approval, and avoids opening anything inbound.
+- Phase 4 grows by roughly two weeks: SOAP client, XML schema mapping, and certification
+  against the hotel's real configuration are more work than consuming a vendor REST API.
+
+None of it blocks Phases 1–3, which run entirely on the mock connector.

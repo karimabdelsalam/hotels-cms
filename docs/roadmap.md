@@ -61,9 +61,10 @@ and every failure branch in `booking-lifecycle.md` has a passing test — includ
 captured with reservation creation failing.
 
 ### Phase 4 — Real property integration · ~3–4 weeks, **externally gated**
-Build `ChannelManagerConnector` against the selected vendor. Resort-code and rate/room code
-mapping UI, ARI push ingestion, two-stage confirmation with reconciliation, health
-monitoring, per-property rollout.
+Build `OxiAriConnector` for inventory sync and `OperaOwsConnector` for the transaction —
+SOAP client, XML schema mapping, resort-code and rate/room code mapping UI, live re-check
+before payment, reservation create/modify/cancel, health monitoring, per-property rollout.
+Certification against the hotel's real configuration is part of this, not after it.
 
 **Blocked on** vendor selection and the API questions in `property-integration.md` §8.
 Nothing else in the project is blocked by it. Properties can go live one at a time, and a property can launch in
@@ -113,15 +114,15 @@ launch in delegated mode without waiting.
 
 ## Open decisions
 
-1. **Which channel manager, and does the contract include a booking-engine / connectivity
-   API for third-party direct booking** — as distinct from their own hosted booking engine?
-   The single highest-value question in the project: it decides whether the checkout is ours
-   or the vendor's.
-2. **Are reservation modification and cancellation available through that API**, or only
-   creation? Sets the capability flags and whether guests can self-serve.
-3. **How are direct-channel rate plans scoped**, separately from OTA rates?
-4. **Is multi-property supported on one CM account**, with all three resort codes under one
-   set of credentials?
+1. **Is OWS licensed and installed on the OPERA 5.6 environment, and if not, what does it
+   cost to add?** The single highest-value question in the project: it decides whether
+   checkout ends with a real confirmation number or with "we are confirming your stay".
+2. **Which OXI interfaces and message types are configured today**, and will ours run
+   alongside the existing channel-manager interface without conflict?
+3. **Exact 5.6 patch level, resort codes, and chain code**, plus who administers the
+   environment and whether a support contract covers interface changes.
+4. **How fast does a direct booking propagate to the channel manager** so OTA availability
+   drops? That latency is the width of the oversell window.
 5. Real hotel names, cities, and brand identity — currently placeholders in the seed data,
    changeable from admin without a deploy.
 6. **Which locales launch first, and in what order.** English is the default and ships with
