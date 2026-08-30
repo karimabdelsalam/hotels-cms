@@ -35,14 +35,12 @@ fourth hotel is a configuration and integration task, not a new software project
   per-locale property, not an Arabic special case.
 - **Hotels are data, never code.** Every property, destination, room type, and offer is a
   database entity managed from the admin panel.
-- **Distribution is pluggable.** The booking path is a per-hotel configuration behind one
-  `PropertyConnector` interface. Confirmed target: **one multi-property OPERA 5.6
-  on-premise** installation with OXI licensed, reached through a channel manager
-  (SiteMinder, STAAH, or SmartHOTEL). No network access to the hotel is required on that
-  path.
-- **Colour carries the identity, not photography.** A saturated Lapis & Gold palette and a
-  gold lattice graphic device, so the site is complete and reviewable before the photo
-  shoot.
+- **Our own booking engine, on OPERA directly.** The checkout stays inside our design.
+  Target: **one multi-property OPERA 5.6 on-premise** installation, with **OXI** feeding
+  inventory continuously and **OWS** carrying the transaction. A channel manager stays in
+  place for OTA distribution, not for direct booking.
+- **Cinematic, three colours, motion-led.** Ink, bone, and one sand accent; a video hero
+  and scroll-driven motion carry the design rather than a large palette.
 
 ## Reference
 

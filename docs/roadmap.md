@@ -60,7 +60,7 @@ cancel. The `NEEDS_MANUAL_REVIEW` queue and its admin actions.
 and every failure branch in `booking-lifecycle.md` has a passing test — including payment
 captured with reservation creation failing.
 
-### Phase 4 — Real property integration · ~3–4 weeks, **externally gated**
+### Phase 4 — OPERA integration · ~5–6 weeks, **externally gated**
 Build `OxiAriConnector` for inventory sync and `OperaOwsConnector` for the transaction —
 SOAP client, XML schema mapping, resort-code and rate/room code mapping UI, live re-check
 before payment, reservation create/modify/cancel, health monitoring, per-property rollout.
@@ -102,8 +102,10 @@ launch in delegated mode without waiting.
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Vendor selection drags | Delays Phase 4 only | Mock connector unblocks everything else; delegated mode is a working launch path |
-| CM contract excludes a direct-booking API | The checkout becomes the vendor's UI, not ours — the design stops at the Book button | Make it a selection criterion between SiteMinder, STAAH, and SmartHOTEL rather than a discovery after signing |
+| OPERA environment answers drag | Delays Phase 4 only | Mock connector unblocks everything else; delegated mode remains a working launch path |
+| OWS not licensed | Checkout loses instant confirmation and falls back to async OXI reservation creation | Price the licence early. If refused, capability flags carry async confirmation through the UI, with allotment buffers against oversell |
+| Two systems writing the same inventory | A direct booking and an OTA booking take the last room | OPERA stays the single source of truth; measure propagation latency to the channel manager rather than assuming it, and size the allotment buffer to it |
+| SOAP integration underestimated | Phase 4 overruns | Phase 4 carries 5–6 weeks rather than 3; schema mapping and certification against the real configuration are in scope, not follow-on work |
 | **One shared OPERA behind all three hotels** | A single outage takes the whole group offline, where three installations would have isolated it | ARI is pushed and stored, so search and browsing survive an outage; only reservation creation queues. This is why `InventorySnapshot` is not optional |
 | OPERA confirmation number never arrives over OXI | Guest holds a confirmed booking the hotel cannot see | Reconciliation job flags any booking missing its PMS number past a threshold, as an admin queue |
 | ARI sync latency causes oversell | Guest-facing failure and a refund | Allotment buffer, stop-sell threshold, and a mandatory live `quote()` before payment |
