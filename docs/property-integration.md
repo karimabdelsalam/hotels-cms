@@ -94,11 +94,20 @@ immediately before payment. **A cached price is never the price the guest pays.*
 Confirmed, and it changes several earlier assumptions for the better:
 
 - **One multi-property OPERA 5.6 on-premise installation** hosts all three hotels,
-  distinguished by resort code — not three separate installations.
-- **OXI is licensed** for all three properties.
-- The channel manager will be **SiteMinder, STAAH, or SmartHOTEL**.
-- No third-party booking engine is under contract; one would likely come from the same
-  vendor as the channel manager.
+  distinguished by resort code — not three separate installations. Latest patch level.
+- **An OXI server is in place**, and interfaces can be configured on request.
+- **We are the Oracle support provider for the property.** There is no third-party
+  gatekeeper: the same team that builds this platform administers the PMS environment.
+- Resort codes exist for all three properties.
+- A channel manager (SiteMinder, STAAH, or SmartHOTEL) stays in place for OTA
+  distribution, and our interface runs alongside it.
+- No third-party booking engine is under contract. We are building our own.
+
+**Administering the PMS ourselves is the largest single advantage this project has.** The
+usual failure mode for a custom booking engine is a months-long queue behind a hotel IT
+department and an Oracle partner who answer to someone else. That queue does not exist
+here. Interface configuration, message-type subscriptions, test environments, and schema
+questions are all in-house.
 
 What this buys us: **one integration, one credential set, one endpoint, one mapping
 exercise.** The per-hotel connector configuration still exists — each property has its own
@@ -319,34 +328,67 @@ converts worse and calls the hotel more — and the mitigation is an allotment b
 type plus a stop-sell threshold, because the commit is no longer synchronous. Workable, but
 **OWS is worth paying for if the quote is reasonable.** Get the number before deciding.
 
-### What still has to be verified in the actual environment
+### What is left to check
 
-Per the brief: do not invent endpoints or assume an undocumented API exists. These are
-questions for the Oracle partner or whoever administers the installation.
+Most of the original list is answered. One question remains, and it is the one that decides
+the shape of checkout.
 
-1. **Is OWS licensed and installed?** If not, what does it cost to add? This is the single
-   decision that shapes the checkout.
-2. **Which OXI interfaces are configured today**, and which message types are enabled —
-   reservation, profile, rate, inventory/availability, blocks?
-3. **Exact version and patch level** of the 5.6 installation.
-4. **Resort codes and chain code** for the three properties.
-5. Is there an existing OXI interface to a channel manager, and **will ours run alongside
-   it** without conflicting on the same message types?
-6. Who owns the OPERA environment operationally, and is there a support contract covering
-   interface configuration changes?
+**Is the OWS component licensed and installed on this environment?**
 
-### The thing to get right: two systems writing the same inventory
+OWS is a separately licensed module, not part of a base OPERA install and not the same thing
+as OXI. The check is whether the OWS licence code is active in the property's licence
+configuration, and whether the web-service layer is deployed on the application server.
+Confirm both against the environment and Oracle's own documentation for the exact patch
+level rather than against any assumed endpoint path — per the brief, no invented endpoints.
 
-A channel manager is still needed for OTA distribution — Booking.com and Expedia do not go
-away. So OPERA ends up with two integrations: the CM for OTAs, and ours for direct.
+Since we administer the environment, this is an internal check plus, if it is missing, an
+Oracle quote. Everything else is now a configuration task we own.
 
-**OPERA has to remain the single source of truth**, with the CM syncing from it. When we
-create a direct booking through OWS, OPERA decrements, and OXI propagates that to the CM so
-OTA availability drops. That is the normal topology, but it makes propagation latency a real
-number to measure rather than assume — it is the width of the oversell window.
+### What to configure
 
-If reservations are created over OXI instead of OWS, that window widens by the async delay.
-One more reason OWS is worth the licence.
+1. **A dedicated OXI interface for the booking platform**, separate from the channel
+   manager's. OXI supports multiple external systems, each with its own interface
+   definition and message subscriptions — ours must not be bolted onto the CM's.
+2. **Message subscriptions on our interface:** rates, inventory/availability, and
+   restrictions outbound to us continuously; reservations inbound if OWS is unavailable and
+   OXI has to carry the transaction too.
+3. **A test property or test environment** mirroring production resort codes, so
+   certification does not run against live inventory.
+4. **Room-type and rate-code exports** for all three resorts, to seed the mapping tables.
+
+### Two OXI interfaces on one OPERA
+
+Confirmed that ours runs alongside the channel manager's. That is a supported topology —
+OXI is built for multiple external systems — but the division of labour has to be explicit:
+
+```
+                    ┌──────────────────────────────┐
+   OTA channels ◄───┤  Channel manager interface   │
+   (Booking, etc.)  │  ARI out · OTA reservations  │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+                    │   OPERA 5.6 multi-property   │  ← single source of truth
+                    │   CAI · ALX · RSG            │
+                    └──────────────┬───────────────┘
+                                   │
+                    ┌──────────────▼───────────────┐
+   our website ◄────┤  Booking platform interface  │
+                    │  ARI out · direct bookings   │
+                    └──────────────────────────────┘
+```
+
+**OPERA stays the single source of truth and both sides sync from it.** A direct booking
+decrements in OPERA, and OXI propagates that to the channel manager so OTA availability
+drops.
+
+The number that matters is **how long that propagation takes** — it is the width of the
+oversell window, and it should be measured on the real environment rather than assumed. Size
+the allotment buffer to the measurement. Because we administer the environment, this is
+testable before launch rather than discovered afterwards.
+
+If reservations are created over OXI instead of OWS, the window widens by the async delay on
+our side too. One more reason OWS is worth having.
 
 ### What this changes in the plan
 

@@ -116,15 +116,14 @@ launch in delegated mode without waiting.
 
 ## Open decisions
 
-1. **Is OWS licensed and installed on the OPERA 5.6 environment, and if not, what does it
-   cost to add?** The single highest-value question in the project: it decides whether
-   checkout ends with a real confirmation number or with "we are confirming your stay".
-2. **Which OXI interfaces and message types are configured today**, and will ours run
-   alongside the existing channel-manager interface without conflict?
-3. **Exact 5.6 patch level, resort codes, and chain code**, plus who administers the
-   environment and whether a support contract covers interface changes.
-4. **How fast does a direct booking propagate to the channel manager** so OTA availability
-   drops? That latency is the width of the oversell window.
+1. **Is the OWS component licensed and installed?** The one remaining integration question,
+   and the one that decides whether checkout ends with a real confirmation number or with
+   "we are confirming your stay". An internal check, since we administer the environment,
+   plus an Oracle quote if it is missing.
+2. **The real group name.** Two of the three resorts carry Fantazia and one is Sirena, so
+   the parent brand is currently a stand-in in the design.
+3. **Measured propagation latency** from a direct booking in OPERA to the channel manager.
+   Testable on our own environment before launch; it sizes the allotment buffer.
 5. Real hotel names, cities, and brand identity — currently placeholders in the seed data,
    changeable from admin without a deploy.
 6. **Which locales launch first, and in what order.** English is the default and ships with

@@ -301,6 +301,11 @@ summary, sticky on desktop and collapsible on mobile. The total is visible at ev
 
 ## 8. Homepage structure
 
+Every section below is a `SiteModule` — switched on or off and reordered from admin, never
+hard-coded. The current configuration for a three-resort group in one destination has
+**Destinations off** and Experiences in its place; the list is the default order, not a
+fixed layout.
+
 1. **Hero** — lapis ground with the gold lattice, full-bleed image behind it when one
    exists, positioning line in Bodoni, search widget overlaid. Must answer "an Egyptian
    hotel group" in one second — and be recognisable as *this* group in a screenshot with
@@ -308,8 +313,9 @@ summary, sticky on desktop and collapsible on mobile. The total is visible at ev
 2. **Group statement** — one centred serif line plus a short paragraph. The promise.
 3. **Our Hotels** — all three properties as cards in a grid, not a carousel. With three
    hotels, hiding two behind a swipe is a mistake the reference site cannot make and we can.
-4. **Destinations** — full-bleed `--lapis-800` band, overlay cards, one per city. The
-   page's largest block of brand colour, and the moment it stops looking like a template.
+4. **Destinations** — *off in the current configuration.* One destination earns no section.
+   Its slot carries **Experiences** instead: a scroll-snap rail of what the coast is for —
+   house reef, dive sites, desert, sunset sail. Switched on when a second destination opens.
 5. **Offers** — on a `--sand` panel, stacked cards, `All offers` link in `--gold-600`.
 6. **Dining & Experiences** — editorial split.
 7. **Meetings & Events** — editorial split, mirrored, with an RFP call to action.

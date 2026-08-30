@@ -1,11 +1,12 @@
 # Hotels CMS — Egyptian Hotel Group Platform
 
-One group website + one central multi-property booking experience + multiple property
-management/distribution systems behind it.
+One group website + one central multi-property booking experience + one OPERA behind it.
 
-This repository is the corporate website, CMS, and central booking platform for a hotel
-group operating in Egypt. It is a **multi-property platform from day one** — adding a
-fourth hotel is a configuration and integration task, not a new software project.
+This repository is the corporate website, CMS, and central booking platform for a resort
+group on the Red Sea coast at **Marsa Alam** — Fantazia Resort, Fantazia Royal, and Sirena
+Resort. It is a **multi-property platform from day one**: adding a fourth resort, in this
+destination or another, is a configuration and integration task rather than a new software
+project.
 
 ## Status
 
@@ -35,10 +36,14 @@ fourth hotel is a configuration and integration task, not a new software project
   per-locale property, not an Arabic special case.
 - **Hotels are data, never code.** Every property, destination, room type, and offer is a
   database entity managed from the admin panel.
+- **Homepage sections are feature flags.** `SiteModule` switches each section on, off, and
+  into order from admin. Destinations is off today — three resorts, one destination — and
+  switches on the day a fourth opens elsewhere.
 - **Our own booking engine, on OPERA directly.** The checkout stays inside our design.
   Target: **one multi-property OPERA 5.6 on-premise** installation, with **OXI** feeding
   inventory continuously and **OWS** carrying the transaction. A channel manager stays in
-  place for OTA distribution, not for direct booking.
+  place for OTA distribution, not for direct booking. We administer the Oracle environment
+  ourselves, so interface configuration is in-house rather than queued behind a partner.
 - **Cinematic, three colours, motion-led.** Ink, bone, and one sand accent; a video hero
   and scroll-driven motion carry the design rather than a large palette.
 

@@ -158,6 +158,24 @@ hotel site looks cheap.
 
 For About, Contact, Terms, Privacy, Careers — editable without a deploy.
 
+### SiteModule
+`id · key · enabled · display_order · settings (jsonb) · updated_by · updated_at`
+
+Homepage and navigation sections are **feature flags**, not markup. `destinations`,
+`experiences`, `offers`, `dining`, `events`, `loyalty`, `newsletter` — each can be switched
+on or off and reordered from admin, with no deploy.
+
+This exists because of a real requirement rather than as speculative generality: the group
+currently operates three resorts in **one destination**, so a Destinations section earns
+nothing and is switched off. The day a fourth resort opens elsewhere, it is switched on and
+the `Destination` entities are already in the schema waiting.
+
+The same mechanism covers the modules the brief lists as future — loyalty, gift vouchers,
+long stay — so adding one is a content decision rather than a release.
+
+A module that is off is also absent from navigation, sitemaps, and `hreflang`, so nothing
+half-enabled leaks into search results.
+
 ## 4. Booking entities
 
 ### BookingHold
