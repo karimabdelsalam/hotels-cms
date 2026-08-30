@@ -10,8 +10,34 @@ project.
 
 ## Status
 
-**Phase 0 — Architecture & design direction.** No application code yet. The documents in
-`docs/` are the deliverable currently under review.
+**Phase 1 — content site and CMS model.** The public site runs against a real database.
+The booking engine and OPERA integration are deliberately last; nothing built so far
+assumes them.
+
+Working today: bilingual routing with RTL, database-driven navigation, the resort
+collection, resort detail pages with rooms, experiences, offers, and site-section feature
+flags.
+
+## Running it
+
+```bash
+pnpm install
+createdb fantazia                 # or point DATABASE_URL at any Postgres 16
+cp .env.example .env
+pnpm db:push && pnpm db:seed
+pnpm --filter @fantazia/web dev   # http://localhost:3000 -> /en
+```
+
+`pnpm db:reset` rebuilds and reseeds. `pnpm db:studio` opens Prisma Studio.
+
+## Layout
+
+```
+apps/web          Next.js 15 - public site, App Router, next-intl
+packages/db       Prisma schema, seed, and typed content queries
+docs/             Architecture, data model, integration, design, runbooks
+docs/design/      Standalone design mockups
+```
 
 ## Documents
 

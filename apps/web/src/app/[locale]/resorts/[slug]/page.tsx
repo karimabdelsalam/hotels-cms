@@ -1,0 +1,111 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getResortBySlug, formatMoney } from "@fantazia/db/content";
+import { Reveal } from "@/components/Reveal";
+
+type Props = { params: Promise<{ locale: string; slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const resort = await getResortBySlug(locale, slug);
+  if (!resort) return {};
+  return {
+    title: resort.metaTitle ?? `${resort.name} — Marsa Alam`,
+    description: resort.metaDescription ?? resort.shortDescription ?? undefined,
+  };
+}
+
+export default async function ResortPage({ params }: Props) {
+  const { locale, slug } = await params;
+  setRequestLocale(locale);
+
+  const resort = await getResortBySlug(locale, slug);
+  if (!resort) notFound();
+
+  const t = await getTranslations("resort");
+  const price = formatMoney(resort.fromRateMinor, resort.currency, locale);
+
+  return (
+    <>
+      <header className="resort-hero">
+        <div className="fill f-1" />
+        <div className="wrap resort-hero-inner">
+          <Reveal>
+            <Link href={`/${locale}/resorts`} className="tag tag--surf">
+              ← {t("backToResorts")}
+            </Link>
+          </Reveal>
+          <Reveal delay={0.06}><h1 className="d1">{resort.name}</h1></Reveal>
+          {resort.tagline && (
+            <Reveal delay={0.12}><p className="lede on-deep-lede">{resort.tagline}</p></Reveal>
+          )}
+        </div>
+      </header>
+
+      <section className="section sec-shell">
+        <div className="wrap resort-body">
+          <div className="resort-main">
+            {resort.description && <p className="lede">{resort.description}</p>}
+            {resort.amenities.length > 0 && (
+              <div className="facts">
+                {resort.amenities.map((a) => (
+                  <span className="fact" key={a}>{a}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          <aside className="resort-aside">
+            {price && (
+              <div className="rate">
+                <span className="k">{t("from")}</span>
+                <span className="v">{price}</span> <span className="u">{t("perNight")}</span>
+              </div>
+            )}
+            <dl className="kv">
+              <div><dt>Check in</dt><dd>{resort.checkInTime}</dd></div>
+              <div><dt>Check out</dt><dd>{resort.checkOutTime}</dd></div>
+              {resort.stars && <div><dt>Rating</dt><dd>{"★".repeat(resort.stars)}</dd></div>}
+              {resort.destination && <div><dt>Where</dt><dd>{resort.destination}</dd></div>}
+            </dl>
+          </aside>
+        </div>
+      </section>
+
+      {resort.rooms.length > 0 && (
+        <section className="section sec-sand">
+          <div className="wrap">
+            <div className="head">
+              <h2 className="d2">{t("rooms")}</h2>
+            </div>
+            <div className="rooms">
+              {resort.rooms.map((room, i) => (
+                <Reveal key={room.id} delay={i * 0.06} as="div">
+                  <article className="room">
+                    <div className="room-body">
+                      <h3 className="d3">{room.name}</h3>
+                      {room.description && <p>{room.description}</p>}
+                      <span className="fact">
+                        {t("sleeps")} {room.maxOccupancy}
+                      </span>
+                    </div>
+                    {room.fromRateMinor != null && (
+                      <div className="rate">
+                        <span className="k">{t("from")}</span>
+                        <span className="v">
+                          {formatMoney(room.fromRateMinor, resort.currency, locale)}
+                        </span>{" "}
+                        <span className="u">{t("perNight")}</span>
+                      </div>
+                    )}
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}

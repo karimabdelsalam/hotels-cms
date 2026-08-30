@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "book": "Book",
+    "myBooking": "My Booking",
+    "skipToContent": "Skip to content"
+  },
+  "search": {
+    "resort": "Resort",
+    "allResorts": "All three",
+    "when": "When",
+    "who": "Who",
+    "twoAdults": "2 adults · 1 room",
+    "submit": "Search",
+    "label": "Check availability"
+  },
+  "home": {
+    "eyebrow": "Marsa Alam · Red Sea",
+    "headline1": "The sea",
+    "headline2": "starts at",
+    "headline3": "your step",
+    "lede": "Three resorts on one stretch of Red Sea coast, with a house reef close enough to reach before breakfast.",
+    "scroll": "Scroll",
+    "manifestoTitle": "One bay. Three resorts.",
+    "manifesto1": "Marsa Alam has the clearest water on the Egyptian coast and almost none of the crowd that finds it. Our three resorts sit on the same stretch of it — walking distance apart, sharing one reef, one dive centre, and one reservations desk.",
+    "manifesto2": "Which means you book once, and move between them freely: dinner at one, a dive from another, the quiet pool at the third.",
+    "aboutGroup": "About the group",
+    "collection": "The collection",
+    "resortsTitle": "Three resorts, one shoreline",
+    "compareAll": "Compare all",
+    "reefEyebrow": "The house reef",
+    "reefTitle": "Forty metres of sand, then coral",
+    "reefBody": "No boat, no transfer, no waiting for a group. The reef begins where the beach ends — turtles in the seagrass before eight, and the drop-off close enough to swim to from the jetty.",
+    "reefCta": "Diving & snorkelling",
+    "experiencesEyebrow": "On and off the water",
+    "experiencesTitle": "What the coast is actually for",
+    "offersEyebrow": "Booked direct",
+    "offersTitle": "Rates you will not find anywhere else",
+    "allOffers": "All offers",
+    "weddingsEyebrow": "Weddings & events",
+    "weddingsTitle": "One brief. Three resorts. One answer.",
+    "weddingsBody": "Send a single request and every resort that fits comes back to you — capacities, rates, and dates in one reply, instead of three conversations that contradict each other.",
+    "weddingsCta": "Send a request"
+  },
+  "resort": {
+    "from": "From",
+    "perNight": "/ night",
+    "explore": "Explore",
+    "book": "Book",
+    "rooms": "Rooms & suites",
+    "sleeps": "Sleeps",
+    "backToResorts": "All resorts"
+  },
+  "stats": {
+    "resorts": "Resorts",
+    "rooms": "Rooms & suites",
+    "metres": "Metres to the reef",
+    "diveSites": "Dive sites"
+  },
+  "footer": {
+    "resorts": "Resorts",
+    "theCoast": "The coast",
+    "support": "Support",
+    "blurb": "Three resorts on one stretch of Red Sea coast. Reservations answered by people, 8am to midnight.",
+    "rights": "Fantazia Hotels & Resorts · Marsa Alam, Red Sea"
+  }
+}

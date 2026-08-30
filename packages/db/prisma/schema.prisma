@@ -1,0 +1,679 @@
+// Fantazia Hotels & Resorts — central content model.
+//
+// Booking, payment, and OPERA integration entities are deliberately NOT here yet.
+// They arrive in a later phase; see docs/booking-lifecycle.md and
+// docs/property-integration.md. Nothing in this schema assumes a booking engine,
+// and nothing here will need to change when one is added.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// LOCALES  —  languages are rows, never a constant in the code
+// ============================================================
+
+model Locale {
+  code         String  @id @db.VarChar(12) // BCP 47: en, ar, de, ru, fr
+  name         String // English name, e.g. "German"
+  nativeName   String // endonym, e.g. "Deutsch"
+  direction    String  @default("ltr") // ltr | rtl — a property of data, not an Arabic special case
+  script       String  @default("latin") // latin | arabic | cyrillic — drives font subsetting
+  isDefault    Boolean @default(false) // exactly one; protected from deletion
+  isEnabled    Boolean @default(false) // public visibility; gated on completeness
+  fallbackCode String? @db.VarChar(12) // null falls back to the default locale
+  displayOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  strings              TranslationString[]
+  destinationTrans     DestinationTranslation[]
+  resortTrans          ResortTranslation[]
+  roomTypeTrans        RoomTypeTranslation[]
+  amenityTrans         AmenityTranslation[]
+  restaurantTrans      RestaurantTranslation[]
+  experienceTrans      ExperienceTranslation[]
+  offerTrans           OfferTranslation[]
+  pageTrans            PageTranslation[]
+  mediaTrans           MediaAssetTranslation[]
+  menuItemTrans        MenuItemTranslation[]
+
+  @@index([isEnabled, displayOrder])
+  @@map("locales")
+}
+
+/// UI strings — buttons, labels, validation. Keys come from code, values from here.
+model TranslationString {
+  id         String  @id @default(cuid())
+  namespace  String // common | search | booking | admin | email
+  key        String // e.g. "nav.our_resorts"
+  localeCode String  @db.VarChar(12)
+  value      String
+  status     String  @default("missing") // missing | machine | draft | translated | needs_review
+  sourceHash String? // hash of the English value this was translated from — drift detection
+  updatedAt  DateTime @updatedAt
+
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([namespace, key, localeCode])
+  @@index([localeCode, status])
+  @@map("translation_strings")
+}
+
+// ============================================================
+// SITE CONFIGURATION
+// ============================================================
+
+/// Homepage and navigation sections are feature flags, not markup.
+/// `destinations` is off today: three resorts in one destination.
+model SiteModule {
+  key          String   @id // hero | destinations | resorts | reef | experiences | offers | weddings | newsletter
+  enabled      Boolean  @default(true)
+  displayOrder Int      @default(0)
+  settings     Json     @default("{}")
+  updatedAt    DateTime @updatedAt
+
+  @@map("site_modules")
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ============================================================
+// MEDIA
+// ============================================================
+
+model MediaAsset {
+  id         String  @id @default(cuid())
+  storageKey String  @unique
+  mime       String
+  width      Int?
+  height     Int?
+  bytes      Int?
+  blurhash   String?
+  focalX     Float   @default(0.5) // every card crops the same image differently;
+  focalY     Float   @default(0.5) // a face cropped out of frame is how a hotel site looks cheap
+  createdAt  DateTime @default(now())
+
+  translations MediaAssetTranslation[]
+
+  destinationHeroes Destination[] @relation("DestinationHero")
+  resortHeroes      Resort[]      @relation("ResortHero")
+  resortGallery     ResortMedia[]
+  roomTypeMedia     RoomTypeMedia[]
+  experienceHeroes  Experience[]  @relation("ExperienceHero")
+  offerHeroes       Offer[]       @relation("OfferHero")
+  restaurantHeroes  Restaurant[]  @relation("RestaurantHero")
+
+  @@map("media_assets")
+}
+
+model MediaAssetTranslation {
+  id         String @id @default(cuid())
+  mediaId    String
+  localeCode String @db.VarChar(12)
+  alt        String
+  caption    String?
+
+  media  MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  locale Locale     @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([mediaId, localeCode])
+  @@map("media_asset_translations")
+}
+
+// ============================================================
+// DESTINATIONS  —  entities even while the module is switched off
+// ============================================================
+
+model Destination {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  country      String  @default("EG")
+  latitude     Float?
+  longitude    Float?
+  heroMediaId  String?
+  displayOrder Int     @default(0)
+  status       String  @default("published") // draft | published | archived
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  heroMedia    MediaAsset?              @relation("DestinationHero", fields: [heroMediaId], references: [id])
+  translations DestinationTranslation[]
+  resorts      Resort[]
+
+  @@map("destinations")
+}
+
+model DestinationTranslation {
+  id              String  @id @default(cuid())
+  destinationId   String
+  localeCode      String  @db.VarChar(12)
+  name            String
+  slug            String
+  description     String?
+  metaTitle       String?
+  metaDescription String?
+
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  locale      Locale      @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([destinationId, localeCode])
+  @@unique([localeCode, slug])
+  @@map("destination_translations")
+}
+
+// ============================================================
+// RESORTS
+// ============================================================
+
+model Resort {
+  id            String  @id @default(cuid())
+  code          String  @unique // maps to the OPERA resort code later
+  destinationId String
+  starRating    Int?
+  address       String?
+  latitude      Float?
+  longitude     Float?
+  phone         String?
+  email         String?
+  checkInTime   String  @default("14:00")
+  checkOutTime  String  @default("12:00")
+  currency      String  @default("EGP")
+  timezone      String  @default("Africa/Cairo")
+  heroMediaId   String?
+  displayOrder  Int     @default(0)
+  status        String  @default("published")
+
+  /// Indicative nightly rate in minor units (piastres) for display before the
+  /// booking engine exists. Replaced by live rates in a later phase.
+  fromRateMinor Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  destination  Destination         @relation(fields: [destinationId], references: [id])
+  heroMedia    MediaAsset?         @relation("ResortHero", fields: [heroMediaId], references: [id])
+  translations ResortTranslation[]
+  gallery      ResortMedia[]
+  roomTypes    RoomType[]
+  restaurants  Restaurant[]
+  amenities    ResortAmenity[]
+  offers       Offer[]
+  userAccess   UserResortAccess[]
+  menuItems    MenuItem[]
+
+  @@index([destinationId, status])
+  @@map("resorts")
+}
+
+model ResortTranslation {
+  id               String  @id @default(cuid())
+  resortId         String
+  localeCode       String  @db.VarChar(12)
+  name             String
+  slug             String
+  tagline          String?
+  shortDescription String?
+  description      String?
+  metaTitle        String?
+  metaDescription  String?
+
+  resort Resort @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([resortId, localeCode])
+  @@unique([localeCode, slug]) // the primary public lookup
+  @@map("resort_translations")
+}
+
+model ResortMedia {
+  resortId     String
+  mediaId      String
+  displayOrder Int    @default(0)
+
+  resort Resort     @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  media  MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([resortId, mediaId])
+  @@map("resort_media")
+}
+
+// ============================================================
+// ROOMS
+// ============================================================
+
+model RoomType {
+  id           String  @id @default(cuid())
+  resortId     String
+  externalCode String? // OPERA room type code — nullable until mapping is done,
+  //                      so content can go live before the connector exists
+  maxAdults    Int     @default(2)
+  maxChildren  Int     @default(0)
+  maxOccupancy Int     @default(2)
+  sizeSqm      Int?
+  bedConfig    String?
+  displayOrder Int     @default(0)
+  active       Boolean @default(true)
+
+  fromRateMinor Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resort       Resort                @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  translations RoomTypeTranslation[]
+  media        RoomTypeMedia[]
+
+  @@unique([resortId, externalCode])
+  @@index([resortId, active])
+  @@map("room_types")
+}
+
+model RoomTypeTranslation {
+  id          String  @id @default(cuid())
+  roomTypeId  String
+  localeCode  String  @db.VarChar(12)
+  name        String
+  slug        String
+  description String?
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  locale   Locale   @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([roomTypeId, localeCode])
+  @@map("room_type_translations")
+}
+
+model RoomTypeMedia {
+  roomTypeId   String
+  mediaId      String
+  displayOrder Int    @default(0)
+
+  roomType RoomType   @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  media    MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([roomTypeId, mediaId])
+  @@map("room_type_media")
+}
+
+// ============================================================
+// AMENITIES, RESTAURANTS, EXPERIENCES
+// ============================================================
+
+model Amenity {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  icon         String?
+  category     String  @default("general")
+  displayOrder Int     @default(0)
+
+  translations AmenityTranslation[]
+  resorts      ResortAmenity[]
+
+  @@map("amenities")
+}
+
+model AmenityTranslation {
+  id         String @id @default(cuid())
+  amenityId  String
+  localeCode String @db.VarChar(12)
+  name       String
+
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  locale  Locale  @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([amenityId, localeCode])
+  @@map("amenity_translations")
+}
+
+model ResortAmenity {
+  resortId  String
+  amenityId String
+
+  resort  Resort  @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([resortId, amenityId])
+  @@map("resort_amenities")
+}
+
+model Restaurant {
+  id           String  @id @default(cuid())
+  resortId     String
+  cuisine      String?
+  dressCode    String?
+  openingHours String?
+  heroMediaId  String?
+  displayOrder Int     @default(0)
+  status       String  @default("published")
+
+  resort       Resort                  @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  heroMedia    MediaAsset?             @relation("RestaurantHero", fields: [heroMediaId], references: [id])
+  translations RestaurantTranslation[]
+
+  @@index([resortId, status])
+  @@map("restaurants")
+}
+
+model RestaurantTranslation {
+  id           String  @id @default(cuid())
+  restaurantId String
+  localeCode   String  @db.VarChar(12)
+  name         String
+  slug         String
+  description  String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  locale     Locale     @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([restaurantId, localeCode])
+  @@map("restaurant_translations")
+}
+
+/// What the coast is actually for. Fills the slot the Destinations module vacated.
+model Experience {
+  id            String  @id @default(cuid())
+  code          String  @unique
+  category      String  @default("water") // water | desert | wellness | family
+  durationHours Float?
+  priceMinor    Int?
+  heroMediaId   String?
+  displayOrder  Int     @default(0)
+  status        String  @default("published")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  heroMedia    MediaAsset?             @relation("ExperienceHero", fields: [heroMediaId], references: [id])
+  translations ExperienceTranslation[]
+  menuItems    MenuItem[]
+
+  @@map("experiences")
+}
+
+model ExperienceTranslation {
+  id           String  @id @default(cuid())
+  experienceId String
+  localeCode   String  @db.VarChar(12)
+  name         String
+  slug         String
+  summary      String?
+  description  String?
+
+  experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  locale     Locale     @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([experienceId, localeCode])
+  @@unique([localeCode, slug])
+  @@map("experience_translations")
+}
+
+// ============================================================
+// OFFERS
+// ============================================================
+
+model Offer {
+  id            String    @id @default(cuid())
+  /// Null means group-wide: renders on the homepage and applies at every resort.
+  resortId      String?
+  promoCode     String?
+  discountType  String? // percentage | fixed | value_add
+  discountValue Int?
+  validFrom     DateTime?
+  validTo       DateTime?
+  stayFrom      DateTime?
+  stayTo        DateTime?
+  minNights     Int?
+  heroMediaId   String?
+  displayOrder  Int       @default(0)
+  status        String    @default("published")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resort       Resort?            @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  heroMedia    MediaAsset?        @relation("OfferHero", fields: [heroMediaId], references: [id])
+  translations OfferTranslation[]
+  menuItems    MenuItem[]
+
+  @@index([status, displayOrder])
+  @@map("offers")
+}
+
+model OfferTranslation {
+  id          String  @id @default(cuid())
+  offerId     String
+  localeCode  String  @db.VarChar(12)
+  title       String
+  slug        String
+  summary     String?
+  description String?
+  terms       String?
+  validityLabel String? // human wording shown on the card, e.g. "Until 20 December"
+
+  offer  Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([offerId, localeCode])
+  @@unique([localeCode, slug])
+  @@map("offer_translations")
+}
+
+// ============================================================
+// CONTENT PAGES  —  block-based, so a new page cannot drift
+// ============================================================
+
+model Page {
+  id           String    @id @default(cuid())
+  key          String    @unique
+  template     String    @default("standard")
+  status       String    @default("draft") // draft | published | archived
+  isSystem     Boolean   @default(false) // system pages cannot be deleted
+  publishedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations PageTranslation[]
+  menuItems    MenuItem[]
+
+  @@map("pages")
+}
+
+model PageTranslation {
+  id              String @id @default(cuid())
+  pageId          String
+  localeCode      String @db.VarChar(12)
+  title           String
+  slug            String
+  /// Ordered array of blocks, each { type, props } — composed from the same
+  /// components the homepage uses.
+  blocks          Json   @default("[]")
+  metaTitle       String?
+  metaDescription String?
+
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([pageId, localeCode])
+  @@unique([localeCode, slug])
+  @@map("page_translations")
+}
+
+// ============================================================
+// MENUS  —  items point at content, never at URLs
+// ============================================================
+
+model Menu {
+  id       String @id @default(cuid())
+  key      String @unique // primary | utility | footer_a | footer_b | footer_c
+  name     String
+  maxDepth Int    @default(1)
+
+  items MenuItem[]
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id         String  @id @default(cuid())
+  menuId     String
+  parentId   String?
+  position   Int     @default(0)
+
+  /// page | resort | room_type | offer | experience | destination | route | url
+  targetType String
+  pageId       String?
+  resortId     String?
+  offerId      String?
+  experienceId String?
+  route        String? // for targetType 'route', e.g. "/resorts"
+  url          String? // only for genuinely external links
+  anchor       String?
+
+  openNewTab Boolean @default(false)
+  visibility String  @default("always")
+
+  menu         Menu                  @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent       MenuItem?             @relation("MenuItemChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     MenuItem[]            @relation("MenuItemChildren")
+  page         Page?                 @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  resort       Resort?               @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  offer        Offer?                @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  experience   Experience?           @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  translations MenuItemTranslation[]
+
+  @@index([menuId, position])
+  @@map("menu_items")
+}
+
+/// Label override only. Empty means "use the target's own translated title",
+/// which is what stops menus going stale in seven languages at once.
+model MenuItemTranslation {
+  id         String @id @default(cuid())
+  menuItemId String
+  localeCode String @db.VarChar(12)
+  label      String
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  locale   Locale   @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([menuItemId, localeCode])
+  @@map("menu_item_translations")
+}
+
+// ============================================================
+// STAFF, ROLES, AUDIT
+// ============================================================
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  totpSecret     String?
+  totpEnabled    Boolean   @default(false)
+  status         String    @default("active")
+  lastLoginAt    DateTime?
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles        UserRole[]
+  resortAccess UserResortAccess[]
+  auditEntries AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  key         String @id // SUPER_ADMIN | GROUP_ADMIN | RESORT_ADMIN | RESERVATION_AGENT
+  //                        | CONTENT_MANAGER | TRANSLATOR | FINANCE | READ_ONLY
+  name        String
+  scope       String @default("resort") // group | resort
+  description String?
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  key         String @id // e.g. "content:write", "bookings:read"
+  description String
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleKey       String
+  permissionKey String
+
+  role       Role       @relation(fields: [roleKey], references: [key], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionKey], references: [key], onDelete: Cascade)
+
+  @@id([roleKey, permissionKey])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId  String
+  roleKey String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleKey], references: [key], onDelete: Cascade)
+
+  @@id([userId, roleKey])
+  @@map("user_roles")
+}
+
+/// The scoping table. A group-level role with no rows sees every resort;
+/// anyone else sees exactly the rows listed. Zero rows is zero access.
+model UserResortAccess {
+  userId   String
+  resortId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resort Resort @relation(fields: [resortId], references: [id], onDelete: Cascade)
+
+  @@id([userId, resortId])
+  @@map("user_resort_access")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
