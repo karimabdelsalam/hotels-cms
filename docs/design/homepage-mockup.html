@@ -336,11 +336,11 @@ footer{background:var(--abyss);color:var(--onDeep-2)}
       <b>FANTAZIA</b><span>Marsa Alam</span>
     </a>
     <div class="nav-links">
-      <a href="#houses">Our Resorts</a>
-      <a href="#reef">The Reef</a>
-      <a href="#experiences">Experiences</a>
-      <a href="#offers">Offers</a>
-      <a href="#events">Weddings</a>
+      <a href="/en/resorts">Our Resorts</a>
+      <a href="/en/diving">The Reef</a>
+      <a href="/en/experiences">Experiences</a>
+      <a href="/en/offers">Offers</a>
+      <a href="/en/weddings">Weddings</a>
     </div>
     <div class="nav-right">
       <div class="lang">
@@ -551,16 +551,16 @@ footer{background:var(--abyss);color:var(--onDeep-2)}
         </div>
       </div>
       <div class="fcol"><h3>Resorts</h3><ul>
-        <li><a href="#">Fantazia Resort</a></li><li><a href="#">Fantazia Royal</a></li>
-        <li><a href="#">Sirena Resort</a></li><li><a href="#">Rooms &amp; suites</a></li>
+        <li><a href="/en/resorts/fantazia-resort">Fantazia Resort</a></li><li><a href="/en/resorts/fantazia-royal">Fantazia Royal</a></li>
+        <li><a href="/en/resorts/sirena-resort">Sirena Resort</a></li><li><a href="/en/resorts">Rooms &amp; suites</a></li>
       </ul></div>
       <div class="fcol"><h3>The coast</h3><ul>
-        <li><a href="#">The house reef</a></li><li><a href="#">Dive centre</a></li>
-        <li><a href="#">Experiences</a></li><li><a href="#">Weddings</a></li>
+        <li><a href="/en/experiences/house-reef">The house reef</a></li><li><a href="/en/diving">Dive centre</a></li>
+        <li><a href="/en/experiences">Experiences</a></li><li><a href="/en/weddings">Weddings</a></li>
       </ul></div>
       <div class="fcol"><h3>Support</h3><ul>
-        <li><a href="#">My booking</a></li><li><a href="#">Contact</a></li>
-        <li><a href="#">Cancellation</a></li><li><a href="#">Privacy</a></li>
+        <li><a href="/en/my-booking">My booking</a></li><li><a href="/en/contact">Contact</a></li>
+        <li><a href="/en/cancellation-policy">Cancellation</a></li><li><a href="/en/privacy">Privacy</a></li>
       </ul></div>
     </div>
     <div class="fbar">
@@ -575,6 +575,7 @@ footer{background:var(--abyss);color:var(--onDeep-2)}
     <p><b>Design mockup — third direction.</b> Palette is now one hue family: shallow turquoise through to deep blue, warm sand as the neutral, and coral as the single warm accent on primary actions only. Bright rather than dark, because a Marsa Alam resort should feel sunlit, not cinematic-moody.</p>
     <p><b>Destinations is switched off.</b> With one destination it earns nothing, so the module is a feature flag in admin — off today, on the day a fourth resort opens somewhere else. Its slot now carries <b>Experiences</b>, and the three resorts sit above it in a grid so all three are visible at once rather than behind a swipe.</p>
     <p><b>The group wordmark is a guess.</b> Two of three carry Fantazia, so it stands in as the parent — tell me the real group name and it changes in one place. Room counts, rates, dive-site numbers and all copy are placeholders pending your content.</p>
+    <p><b>The navigation now points at real pages</b> — <code>/en/resorts/fantazia-royal</code>, <code>/en/diving</code>, and so on, not anchors on this page. The full route map and the admin menu builder are a separate screen; menu items point at content rather than URLs, so renaming a resort updates every menu in every language.</p>
     <p>The hero is the real video layout — production swaps one element for <code>&lt;video autoplay muted loop playsinline poster&gt;</code>; the caustics here are a canvas because this preview cannot load an external file.</p>
   </div>
 </aside>

@@ -24,6 +24,8 @@ project.
 | [`docs/api-spec.md`](docs/api-spec.md) | Public, guest, and admin API contracts |
 | [`docs/i18n.md`](docs/i18n.md) | Admin-managed locales, translation workflow, routing and SEO for up to 7 languages |
 | [`docs/authorization.md`](docs/authorization.md) | Multi-property tenancy, roles, permission matrix, enforcement |
+| [`docs/site-structure.md`](docs/site-structure.md) | Page types, the full route map, and the menu system |
+| [`docs/opera-provisioning-runbook.md`](docs/opera-provisioning-runbook.md) | **Step-by-step setup for the PMS team** — what to configure, export, and hand back |
 | [`docs/design-system.md`](docs/design-system.md) | Design direction, tokens, typography, multi-script and RTL rules, component system |
 | [`docs/roadmap.md`](docs/roadmap.md) | Delivery phases, dependencies, risks |
 
@@ -39,6 +41,9 @@ project.
 - **Homepage sections are feature flags.** `SiteModule` switches each section on, off, and
   into order from admin. Destinations is off today — three resorts, one destination — and
   switches on the day a fourth opens elsewhere.
+- **Menus are data, and point at content rather than URLs.** Rename a resort or change its
+  slug and every menu follows in every language; an item whose target is unpublished or
+  switched off hides itself instead of becoming a broken link.
 - **Our own booking engine, on OPERA directly.** The checkout stays inside our design.
   Target: **one multi-property OPERA 5.6 on-premise** installation, with **OXI** feeding
   inventory continuously and **OWS** carrying the transaction. A channel manager stays in

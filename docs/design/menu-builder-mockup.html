@@ -1,0 +1,662 @@
+<title>Fantazia Navigation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --shell:#FAF9F5;
+  --panel:#FFFFFF;
+  --panel-2:#F4F2EC;
+  --foam:#E8F6F4;
+
+  --sea:#0787A3;
+  --sea-dark:#05637A;
+  --deep:#05506D;
+  --surf:#0BB8B0;
+
+  --ink:#06222E;
+  --ink-2:rgba(6,34,46,.66);
+  --ink-3:rgba(6,34,46,.44);
+  --ink-4:rgba(6,34,46,.28);
+
+  --line:rgba(6,34,46,.12);
+  --line-2:rgba(6,34,46,.20);
+
+  --coral:#D7412A;
+  --coral-bg:#FCEDEA;
+  --amber:#9A6608;
+  --amber-bg:#FBF2DF;
+  --ok:#1B7A55;
+  --ok-bg:#E6F4ED;
+
+  --sans:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+
+  --r:10px;
+  --pad:clamp(16px,2.4vw,32px);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--shell);color:var(--ink);
+  font-family:var(--sans);font-size:14px;line-height:1.55;font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:600}
+p{margin:0}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--sea);outline-offset:2px;border-radius:4px}
+
+/* ---------- app chrome ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px var(--pad);flex-wrap:wrap;
+}
+.brandmark{display:flex;align-items:center;gap:12px}
+.brandmark b{font-family:var(--serif);font-weight:400;font-size:1.2rem;letter-spacing:.16em}
+.crumb{font-size:.75rem;color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.crumb span:last-child{color:var(--ink)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+
+.wrap{max-width:1520px;margin:0 auto;padding:var(--pad)}
+
+.pagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.pagehead h1{font-family:var(--serif);font-weight:400;font-size:clamp(1.75rem,3vw,2.4rem);letter-spacing:-.02em;line-height:1.1}
+.pagehead p{color:var(--ink-2);max-width:62ch;margin-top:6px}
+
+/* ---------- controls ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;border-radius:100px;padding:9px 17px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--ink);
+  font-weight:600;font-size:.75rem;letter-spacing:.04em;
+  transition:background .2s,border-color .2s,color .2s,transform .2s;
+}
+.btn:hover{border-color:var(--ink-3);transform:translateY(-1px)}
+.btn--pri{background:var(--sea);border-color:var(--sea);color:#fff}
+.btn--pri:hover{background:var(--sea-dark);border-color:var(--sea-dark)}
+.btn--pri[disabled]{background:var(--panel-2);border-color:var(--line);color:var(--ink-4);cursor:default;transform:none}
+.btn--sm{padding:6px 12px;font-size:.6875rem}
+.btn--ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn--ghost:hover{background:var(--panel-2);border-color:transparent}
+
+.seg{display:inline-flex;background:var(--panel-2);border-radius:100px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{
+  border:none;background:transparent;border-radius:100px;padding:7px 15px;
+  font-size:.75rem;font-weight:600;color:var(--ink-2);transition:background .2s,color .2s;
+}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(6,34,46,.10)}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.6875rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.inp{
+  font-family:var(--sans);font-size:.875rem;padding:9px 13px;border-radius:8px;
+  border:1px solid var(--line-2);background:var(--panel);color:var(--ink);width:100%;
+}
+.inp:focus{outline:2px solid var(--sea);outline-offset:1px;border-color:transparent}
+
+/* ---------- builder layout ---------- */
+.builder{display:grid;grid-template-columns:1fr;gap:18px;align-items:start}
+@media(min-width:1060px){.builder{grid-template-columns:390px minmax(0,1fr)}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card-head{
+  padding:15px 18px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.card-head h2{font-size:.8125rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.card-body{padding:16px 18px}
+
+/* ---------- sources ---------- */
+.tabs{display:flex;gap:2px;padding:10px 12px 0;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  border:none;background:transparent;padding:9px 13px;border-radius:8px 8px 0 0;white-space:nowrap;
+  font-size:.75rem;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+}
+.tabs button[aria-selected="true"]{color:var(--sea);border-bottom-color:var(--sea)}
+
+.srclist{display:flex;flex-direction:column;gap:2px;max-height:340px;overflow-y:auto;padding:10px 12px}
+.src{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;
+  transition:background .18s;cursor:pointer;
+}
+.src:hover{background:var(--panel-2)}
+.src input{width:15px;height:15px;accent-color:var(--sea);flex-shrink:0;cursor:pointer}
+.src .t{flex:1;min-width:0}
+.src .t b{display:block;font-weight:500;font-size:.8125rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src .t code{font-family:var(--mono);font-size:.6875rem;color:var(--ink-3)}
+.src.off .t b{color:var(--ink-3)}
+
+.pill{
+  font-size:.625rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:100px;white-space:nowrap;
+}
+.pill--warn{background:var(--amber-bg);color:var(--amber)}
+.pill--ok{background:var(--ok-bg);color:var(--ok)}
+.pill--sea{background:var(--foam);color:var(--sea-dark)}
+
+.src-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--panel-2)}
+.src-foot span{font-size:.75rem;color:var(--ink-3)}
+
+/* ---------- structure ---------- */
+.items{display:flex;flex-direction:column;gap:6px;padding:14px 16px;min-height:120px}
+.item{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  transition:border-color .2s,box-shadow .2s,opacity .2s;
+}
+.item.child{margin-inline-start:34px}
+.item.dragging{opacity:.4}
+.item.dropbefore{box-shadow:0 -2px 0 var(--sea)}
+.item.hidden-item{background:var(--panel-2);border-style:dashed}
+.item-row{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.grip{
+  color:var(--ink-4);cursor:grab;line-height:1;font-size:1rem;user-select:none;flex-shrink:0;
+  padding:2px 3px;border-radius:4px;
+}
+.grip:active{cursor:grabbing}
+.item-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.item-main b{font-weight:600;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item.hidden-item .item-main b{color:var(--ink-3)}
+.item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.item-meta code{font-family:var(--mono);font-size:.6875rem;color:var(--ink-3)}
+.ctrls{display:flex;gap:1px;flex-shrink:0}
+.ic{
+  border:none;background:transparent;color:var(--ink-3);border-radius:6px;
+  width:28px;height:28px;display:grid;place-items:center;font-size:.8125rem;line-height:1;
+  transition:background .16s,color .16s;
+}
+.ic:hover{background:var(--panel-2);color:var(--ink)}
+.ic[disabled]{color:var(--ink-4);cursor:default;background:transparent}
+.ic--del:hover{background:var(--coral-bg);color:var(--coral)}
+.edit{border-top:1px solid var(--line);padding:13px 14px;display:grid;grid-template-columns:1fr;gap:12px;background:var(--panel-2)}
+@media(min-width:620px){.edit{grid-template-columns:1fr auto auto}}
+.chk{display:flex;align-items:center;gap:8px;font-size:.8125rem;color:var(--ink-2);white-space:nowrap;align-self:end;padding-bottom:8px}
+.chk input{width:15px;height:15px;accent-color:var(--sea)}
+.hint{font-size:.75rem;color:var(--ink-3);padding:2px 14px 12px}
+
+.empty{padding:34px 16px;text-align:center;color:var(--ink-3);font-size:.875rem}
+
+/* ---------- preview ---------- */
+.preview{background:linear-gradient(160deg,#0BB8B0 0%,#0787A3 45%,#05506D 100%);padding:16px 18px;border-radius:12px;margin:0 16px 16px}
+.pv-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pv-mark{font-family:var(--serif);color:#fff;font-size:1.05rem;letter-spacing:.18em}
+.pv-links{display:flex;gap:18px;flex-wrap:wrap}
+.pv-li{position:relative}
+.pv-links a{color:rgba(255,255,255,.92);text-decoration:none;font-size:.75rem;font-weight:500;white-space:nowrap}
+.pv-sub{
+  margin-top:7px;display:flex;flex-direction:column;gap:4px;padding-inline-start:11px;
+  border-inline-start:1px solid rgba(255,255,255,.28);
+}
+.pv-sub a{font-size:.6875rem;color:rgba(255,255,255,.72);font-weight:400}
+
+/* ---------- sitemap ---------- */
+.maps{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px}
+.map h3{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+.map ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.map li{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;font-size:.8125rem}
+.map li:hover{background:var(--panel-2)}
+.map code{font-family:var(--mono);font-size:.75rem;color:var(--sea-dark)}
+.map .n{color:var(--ink-2);margin-inline-start:auto;font-size:.75rem;white-space:nowrap}
+.map li.off code{color:var(--ink-4);text-decoration:line-through}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--panel-2);font-size:.75rem;color:var(--ink-2)}
+.legend b{font-weight:600;color:var(--ink)}
+
+.toast{
+  position:fixed;inset-block-end:22px;inset-inline-start:50%;transform:translate(-50%,80px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:100px;font-size:.8125rem;font-weight:500;
+  z-index:100;opacity:0;transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .38s;pointer-events:none;
+  display:flex;align-items:center;gap:12px;
+}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.toast button{background:none;border:none;color:var(--surf);font-weight:700;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;pointer-events:auto}
+
+.note{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:20px;font-size:.8125rem;color:var(--ink-2)}
+.note p+p{margin-top:9px}
+.note b{color:var(--ink);font-weight:600}
+.note code{font-family:var(--mono);font-size:.75rem;color:var(--sea-dark);background:var(--foam);padding:1px 5px;border-radius:4px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="topbar">
+  <div class="brandmark">
+    <b>FANTAZIA</b>
+    <span class="crumb"><span>Admin</span> › <span>Appearance</span> › <span>Menus</span></span>
+  </div>
+  <div class="topbar-right">
+    <span class="pill pill--sea" id="dirty">Saved</span>
+    <button class="btn btn--pri" id="save" disabled>Save menu</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="pagehead">
+    <div>
+      <h1>Menus</h1>
+      <p>Build the navigation from real pages and resorts. Items point at content, not at URLs — rename a resort or change its slug and every menu follows, in every language.</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field">
+        <label for="menuSel">Menu</label>
+        <select class="inp" id="menuSel" style="min-width:190px">
+          <option value="primary">Primary navigation</option>
+          <option value="utility">Utility bar</option>
+          <option value="footer_a">Footer — Resorts</option>
+          <option value="footer_b">Footer — The coast</option>
+          <option value="footer_c">Footer — Support</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="locSel">Labels in</label>
+        <select class="inp" id="locSel" style="min-width:150px">
+          <option>English</option><option>العربية</option><option>Deutsch</option><option>Русский</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder">
+
+    <!-- ============ SOURCES ============ -->
+    <div class="card">
+      <div class="card-head"><h2>Add items</h2></div>
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <div class="srclist" id="srclist"></div>
+      <div class="src-foot">
+        <span id="selCount">Nothing selected</span>
+        <button class="btn btn--pri btn--sm" id="addBtn" disabled>Add to menu</button>
+      </div>
+    </div>
+
+    <!-- ============ STRUCTURE ============ -->
+    <div class="card">
+      <div class="card-head">
+        <h2>Structure — <span id="menuName">Primary navigation</span></h2>
+        <span style="font-size:.75rem;color:var(--ink-3)" id="itemCount"></span>
+      </div>
+      <div class="items" id="items"></div>
+      <p class="hint">Drag to reorder, or use the arrows. <b>→</b> nests an item under the one above it; primary navigation allows one level.</p>
+      <div class="preview">
+        <div class="pv-bar">
+          <span class="pv-mark">FANTAZIA</span>
+          <div class="pv-links" id="pv"></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><b>Live preview.</b> Items whose target is unpublished or switched off never render — they are greyed above and absent here.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ SITEMAP ============ -->
+  <div class="card" style="margin-top:20px">
+    <div class="card-head">
+      <h2>Pages the visitor can reach</h2>
+      <span style="font-size:.75rem;color:var(--ink-3)">Every route is server-rendered, indexable, and translated</span>
+    </div>
+    <div class="card-body">
+      <div class="maps">
+        <div class="map">
+          <h3>Resorts</h3>
+          <ul>
+            <li><code>/resorts</code><span class="n">index</span></li>
+            <li><code>/resorts/{resort}</code><span class="n">3 pages</span></li>
+            <li><code>/resorts/{resort}/rooms</code><span class="n">3 pages</span></li>
+            <li><code>/resorts/{resort}/rooms/{room}</code><span class="n">from data</span></li>
+            <li><code>/resorts/{resort}/dining</code><span class="n">3 pages</span></li>
+            <li><code>/resorts/{resort}/facilities</code><span class="n">3 pages</span></li>
+            <li><code>/resorts/{resort}/gallery</code><span class="n">3 pages</span></li>
+          </ul>
+        </div>
+        <div class="map">
+          <h3>The coast</h3>
+          <ul>
+            <li><code>/diving</code><span class="n">reef &amp; dive centre</span></li>
+            <li><code>/experiences</code><span class="n">index</span></li>
+            <li><code>/experiences/{slug}</code><span class="n">4 pages</span></li>
+            <li><code>/offers</code><span class="n">index</span></li>
+            <li><code>/offers/{slug}</code><span class="n">from data</span></li>
+            <li><code>/weddings</code><span class="n"></span></li>
+            <li><code>/meetings</code><span class="n">with RFP</span></li>
+            <li class="off"><code>/destinations</code><span class="n">module off</span></li>
+          </ul>
+        </div>
+        <div class="map">
+          <h3>Booking</h3>
+          <ul>
+            <li><code>/search</code><span class="n">results</span></li>
+            <li><code>/book/rooms</code><span class="n">step 1</span></li>
+            <li><code>/book/guest</code><span class="n">step 2</span></li>
+            <li><code>/book/extras</code><span class="n">step 3</span></li>
+            <li><code>/book/review</code><span class="n">step 4</span></li>
+            <li><code>/book/payment</code><span class="n">step 5</span></li>
+            <li><code>/booking/{ref}</code><span class="n">confirmation</span></li>
+            <li><code>/my-booking</code><span class="n">view · cancel</span></li>
+          </ul>
+        </div>
+        <div class="map">
+          <h3>Content pages</h3>
+          <ul>
+            <li><code>/about</code><span class="n">published</span></li>
+            <li><code>/contact</code><span class="n">published</span></li>
+            <li><code>/careers</code><span class="n">published</span></li>
+            <li><code>/terms</code><span class="n">published</span></li>
+            <li><code>/privacy</code><span class="n">published</span></li>
+            <li><code>/cancellation-policy</code><span class="n">published</span></li>
+            <li class="off"><code>/press</code><span class="n">draft</span></li>
+            <li><code>/{slug}</code><span class="n">editors add more</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><b>Content pages are block-based.</b> Editors compose them from the same components the homepage uses, so a new page cannot drift away from the design system. The <code>/{slug}</code> catch-all is matched last, so a page can never shadow a booking route.</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><b>This screen is a working prototype.</b> Add, remove, reorder, nest, rename, and switch between the five menus — the preview updates live. Nothing persists; Save is a demonstration.</p>
+    <p><b>Try the two behaviours that matter.</b> The <em>Destinations</em> item in the primary menu is greyed because its module is switched off, and <em>Press</em> under Pages is a draft — neither renders in the preview, and neither can become a broken link. Add them and see. This is what lets you keep a menu item ready for a resort that opens next season without it leaking onto the live site.</p>
+    <p><b>Labels are per language, structure is shared.</b> Switching the label language changes the words, never the tree — so the site cannot end up with a different information architecture in German than in English, which is what happens when each language gets its own menu and becomes unmaintainable past two.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="undo" hidden>Undo</button></div>
+
+<script>
+(function(){
+  var SOURCES = {
+    pages:{label:'Pages',items:[
+      {id:'p1',label:'About the group',route:'/about',type:'page',status:'ok'},
+      {id:'p2',label:'Contact',route:'/contact',type:'page',status:'ok'},
+      {id:'p3',label:'Careers',route:'/careers',type:'page',status:'ok'},
+      {id:'p4',label:'Terms & conditions',route:'/terms',type:'page',status:'ok'},
+      {id:'p5',label:'Privacy',route:'/privacy',type:'page',status:'ok'},
+      {id:'p6',label:'Cancellation policy',route:'/cancellation-policy',type:'page',status:'ok'},
+      {id:'p7',label:'Press',route:'/press',type:'page',status:'draft'}
+    ]},
+    resorts:{label:'Resorts',items:[
+      {id:'r1',label:'Fantazia Resort',route:'/resorts/fantazia-resort',type:'resort',status:'ok'},
+      {id:'r2',label:'Fantazia Royal',route:'/resorts/fantazia-royal',type:'resort',status:'ok'},
+      {id:'r3',label:'Sirena Resort',route:'/resorts/sirena-resort',type:'resort',status:'ok'},
+      {id:'r4',label:'Rooms — Fantazia Resort',route:'/resorts/fantazia-resort/rooms',type:'resort',status:'ok'},
+      {id:'r5',label:'Dining — Fantazia Royal',route:'/resorts/fantazia-royal/dining',type:'resort',status:'ok'}
+    ]},
+    offers:{label:'Offers',items:[
+      {id:'o1',label:'Stay a week, dive free',route:'/offers/reef-week',type:'offer',status:'ok'},
+      {id:'o2',label:'Book direct, save 15%',route:'/offers/direct-15',type:'offer',status:'ok'},
+      {id:'o3',label:'Kids stay free',route:'/offers/kids-free',type:'offer',status:'ok'},
+      {id:'o4',label:'Early booking 2025',route:'/offers/early-2025',type:'offer',status:'expired'}
+    ]},
+    experiences:{label:'Experiences',items:[
+      {id:'x1',label:'The house reef',route:'/experiences/house-reef',type:'experience',status:'ok'},
+      {id:'x2',label:'Dolphin house',route:'/experiences/dolphin-house',type:'experience',status:'ok'},
+      {id:'x3',label:'Wadi & desert',route:'/experiences/wadi-desert',type:'experience',status:'ok'},
+      {id:'x4',label:'Sunset sail',route:'/experiences/sunset-sail',type:'experience',status:'ok'}
+    ]},
+    routes:{label:'System',items:[
+      {id:'s1',label:'Home',route:'/',type:'route',status:'ok'},
+      {id:'s2',label:'All resorts',route:'/resorts',type:'route',status:'ok'},
+      {id:'s3',label:'All offers',route:'/offers',type:'route',status:'ok'},
+      {id:'s4',label:'Experiences',route:'/experiences',type:'route',status:'ok'},
+      {id:'s5',label:'Diving & the reef',route:'/diving',type:'route',status:'ok'},
+      {id:'s6',label:'Weddings',route:'/weddings',type:'route',status:'ok'},
+      {id:'s7',label:'Meetings & events',route:'/meetings',type:'route',status:'ok'},
+      {id:'s8',label:'My Booking',route:'/my-booking',type:'route',status:'ok'},
+      {id:'s9',label:'Destinations',route:'/destinations',type:'route',status:'module_off'}
+    ]},
+    url:{label:'Custom link',items:[]}
+  };
+
+  var STATUS = {
+    ok:null,
+    draft:{t:'Draft',cls:'pill--warn',why:'Page is not published'},
+    expired:{t:'Expired',cls:'pill--warn',why:'Offer window has passed'},
+    module_off:{t:'Module off',cls:'pill--warn',why:'Destinations module is switched off'}
+  };
+
+  var uid = 0;
+  function mk(src, depth){ return {uid:'i'+(++uid), label:src.label, route:src.route, type:src.type, status:src.status, depth:depth||0, newTab:false, open:false}; }
+  function from(id){
+    for(var k in SOURCES){ var f = SOURCES[k].items.filter(function(i){return i.id===id;})[0]; if(f) return f; }
+  }
+
+  var menus = {
+    primary:[
+      mk(from('s2'),0), mk(from('r1'),1), mk(from('r2'),1), mk(from('r3'),1),
+      mk(from('s5'),0), mk(from('s4'),0), mk(from('s3'),0), mk(from('s6'),0),
+      mk(from('p1'),0), mk(from('s9'),0)
+    ],
+    utility:[ mk(from('s8'),0), mk(from('p2'),0) ],
+    footer_a:[ mk(from('r1'),0), mk(from('r2'),0), mk(from('r3'),0) ],
+    footer_b:[ mk(from('s5'),0), mk(from('x1'),0), mk(from('x3'),0), mk(from('s6'),0) ],
+    footer_c:[ mk(from('s8'),0), mk(from('p2'),0), mk(from('p6'),0), mk(from('p5'),0) ]
+  };
+
+  var cur = 'primary', tab = 'pages', dirty = false, lastRemoved = null;
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- tabs ---------- */
+  var tabsEl = $('tabs');
+  Object.keys(SOURCES).forEach(function(k){
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = SOURCES[k].label;
+    b.setAttribute('role','tab');
+    b.onclick = function(){ tab = k; renderTabs(); renderSources(); };
+    tabsEl.appendChild(b);
+  });
+  function renderTabs(){
+    [].forEach.call(tabsEl.children, function(b,i){
+      b.setAttribute('aria-selected', Object.keys(SOURCES)[i] === tab ? 'true' : 'false');
+    });
+  }
+
+  /* ---------- sources ---------- */
+  function renderSources(){
+    var el = $('srclist'); el.innerHTML = '';
+    if(tab === 'url'){
+      var w = document.createElement('div');
+      w.style.cssText = 'display:flex;flex-direction:column;gap:12px;padding:4px 2px';
+      w.innerHTML = '<div class="field"><label for="cuLabel">Label</label><input class="inp" id="cuLabel" placeholder="Travel agents"></div>' +
+                    '<div class="field"><label for="cuUrl">URL</label><input class="inp" id="cuUrl" placeholder="https://…"></div>' +
+                    '<p style="font-size:.75rem;color:var(--ink-3)">Only for links outside the site. Anything on the site should be added from the other tabs, so it survives a rename.</p>';
+      el.appendChild(w);
+      updateSel();
+      return;
+    }
+    SOURCES[tab].items.forEach(function(it){
+      var st = STATUS[it.status];
+      var row = document.createElement('label');
+      row.className = 'src' + (st ? ' off' : '');
+      row.innerHTML =
+        '<input type="checkbox" value="' + it.id + '">' +
+        '<span class="t"><b>' + it.label + '</b><code>' + it.route + '</code></span>' +
+        (st ? '<span class="pill ' + st.cls + '" title="' + st.why + '">' + st.t + '</span>' : '');
+      row.querySelector('input').onchange = updateSel;
+      el.appendChild(row);
+    });
+    updateSel();
+  }
+  function checked(){ return [].slice.call(document.querySelectorAll('#srclist input:checked')); }
+  function updateSel(){
+    if(tab === 'url'){
+      var l = $('cuLabel'), u = $('cuUrl');
+      var on = l && u && l.value.trim() && u.value.trim();
+      $('selCount').textContent = on ? 'Custom link ready' : 'Enter a label and URL';
+      $('addBtn').disabled = !on;
+      if(l){ l.oninput = updateSel; u.oninput = updateSel; }
+      return;
+    }
+    var n = checked().length;
+    $('selCount').textContent = n ? n + ' selected' : 'Nothing selected';
+    $('addBtn').disabled = !n;
+  }
+
+  $('addBtn').onclick = function(){
+    if(tab === 'url'){
+      menus[cur].push(mk({label:$('cuLabel').value.trim(), route:$('cuUrl').value.trim(), type:'url', status:'ok'},0));
+      $('cuLabel').value = ''; $('cuUrl').value = '';
+      toast('Custom link added');
+    } else {
+      var c = checked();
+      c.forEach(function(i){ menus[cur].push(mk(from(i.value),0)); i.checked = false; });
+      toast(c.length + (c.length === 1 ? ' item added' : ' items added'));
+    }
+    setDirty(true); updateSel(); render();
+  };
+
+  /* ---------- structure ---------- */
+  function render(){
+    var list = menus[cur], el = $('items'); el.innerHTML = '';
+    $('itemCount').textContent = list.length + (list.length === 1 ? ' item' : ' items');
+    $('menuName').textContent = $('menuSel').options[$('menuSel').selectedIndex].text;
+
+    if(!list.length){
+      el.innerHTML = '<div class="empty">This menu is empty. Add items from the left.</div>';
+      renderPreview(); return;
+    }
+
+    list.forEach(function(it, i){
+      var st = STATUS[it.status];
+      var d = document.createElement('div');
+      d.className = 'item' + (it.depth ? ' child' : '') + (st ? ' hidden-item' : '');
+      d.draggable = true; d.dataset.i = i;
+
+      var row = document.createElement('div'); row.className = 'item-row';
+      row.innerHTML =
+        '<span class="grip" aria-hidden="true">⠿</span>' +
+        '<span class="item-main"><b>' + esc(it.label) + '</b>' +
+          '<span class="item-meta"><code>' + esc(it.route) + '</code>' +
+          (st ? '<span class="pill ' + st.cls + '" title="' + st.why + '">' + st.t + '</span>' : '') +
+          (it.newTab ? '<span class="pill pill--sea">New tab</span>' : '') +
+        '</span></span>';
+
+      var ctr = document.createElement('span'); ctr.className = 'ctrls';
+      ctr.appendChild(icon('↑','Move up', i === 0, function(){ move(i,-1); }));
+      ctr.appendChild(icon('↓','Move down', i === list.length-1, function(){ move(i,1); }));
+      ctr.appendChild(icon('→','Nest under the item above', it.depth === 1 || i === 0 || list[i-1].depth === 1 || cur !== 'primary', function(){ setDepth(i,1); }));
+      ctr.appendChild(icon('←','Move out one level', it.depth === 0, function(){ setDepth(i,0); }));
+      ctr.appendChild(icon('✎','Edit', false, function(){ it.open = !it.open; render(); }));
+      var del = icon('✕','Remove', false, function(){ remove(i); }); del.classList.add('ic--del');
+      ctr.appendChild(del);
+      row.appendChild(ctr);
+      d.appendChild(row);
+
+      if(it.open){
+        var ed = document.createElement('div'); ed.className = 'edit';
+        ed.innerHTML =
+          '<div class="field"><label>Label shown in the menu</label><input class="inp" value="' + esc(it.label) + '"></div>' +
+          '<label class="chk"><input type="checkbox"' + (it.newTab ? ' checked' : '') + '> New tab</label>' +
+          '<button class="btn btn--ghost" style="align-self:end;margin-bottom:6px">Done</button>';
+        ed.querySelector('input.inp').oninput = function(e){ it.label = e.target.value; setDirty(true); renderPreview(); };
+        ed.querySelector('.chk input').onchange = function(e){ it.newTab = e.target.checked; setDirty(true); render(); };
+        ed.querySelector('button').onclick = function(){ it.open = false; render(); };
+        d.appendChild(ed);
+      }
+
+      d.addEventListener('dragstart', function(e){ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', i); d.classList.add('dragging'); });
+      d.addEventListener('dragend', function(){ d.classList.remove('dragging'); clearDrop(); });
+      d.addEventListener('dragover', function(e){ e.preventDefault(); clearDrop(); d.classList.add('dropbefore'); });
+      d.addEventListener('drop', function(e){
+        e.preventDefault(); clearDrop();
+        var f = +e.dataTransfer.getData('text/plain');
+        if(isNaN(f) || f === i) return;
+        var moved = menus[cur].splice(f,1)[0];
+        menus[cur].splice(f < i ? i-1 : i, 0, moved);
+        normalise(); setDirty(true); render();
+      });
+
+      el.appendChild(d);
+    });
+    renderPreview();
+  }
+  function clearDrop(){ [].forEach.call(document.querySelectorAll('.item'), function(n){ n.classList.remove('dropbefore'); }); }
+
+  function icon(ch, title, off, fn){
+    var b = document.createElement('button');
+    b.type='button'; b.className='ic'; b.textContent=ch; b.title=title;
+    b.setAttribute('aria-label', title);
+    if(off) b.disabled = true; else b.onclick = fn;
+    return b;
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function move(i, d){
+    var l = menus[cur], j = i + d;
+    if(j < 0 || j >= l.length) return;
+    var t = l[i]; l[i] = l[j]; l[j] = t;
+    normalise(); setDirty(true); render();
+  }
+  function setDepth(i, d){ menus[cur][i].depth = d; normalise(); setDirty(true); render(); }
+  function normalise(){
+    menus[cur].forEach(function(it,i){
+      if(cur !== 'primary') it.depth = 0;
+      if(i === 0) it.depth = 0;
+      else if(it.depth === 1 && menus[cur][i-1].depth === 1 && !hasParentAbove(i)) it.depth = 1;
+    });
+    function hasParentAbove(i){ for(var k=i-1;k>=0;k--){ if(menus[cur][k].depth===0) return true; } return false; }
+  }
+
+  function remove(i){
+    lastRemoved = {menu:cur, index:i, item:menus[cur][i]};
+    menus[cur].splice(i,1); normalise(); setDirty(true); render();
+    toast('“' + lastRemoved.item.label + '” removed', true);
+  }
+  $('undo').onclick = function(){
+    if(!lastRemoved) return;
+    menus[lastRemoved.menu].splice(lastRemoved.index, 0, lastRemoved.item);
+    lastRemoved = null; render(); hideToast(); toast('Restored');
+  };
+
+  /* ---------- preview ---------- */
+  function renderPreview(){
+    var pv = $('pv'); pv.innerHTML = '';
+    var list = menus[cur].filter(function(it){ return !STATUS[it.status]; });
+    if(!list.length){ pv.innerHTML = '<span style="color:rgba(255,255,255,.6);font-size:.75rem">Nothing to show</span>'; return; }
+    var i = 0;
+    while(i < list.length){
+      var top = list[i], kids = [];
+      var j = i + 1;
+      while(j < list.length && list[j].depth === 1){ kids.push(list[j]); j++; }
+      var li = document.createElement('div'); li.className = 'pv-li';
+      li.innerHTML = '<a href="#" onclick="return false">' + esc(top.label) + (kids.length ? ' ▾' : '') + '</a>';
+      if(kids.length){
+        var sub = document.createElement('div'); sub.className = 'pv-sub';
+        kids.forEach(function(k){ sub.innerHTML += '<a href="#" onclick="return false">' + esc(k.label) + '</a>'; });
+        li.appendChild(sub);
+      }
+      pv.appendChild(li);
+      i = j;
+    }
+  }
+
+  /* ---------- chrome ---------- */
+  function setDirty(v){
+    dirty = v;
+    $('save').disabled = !v;
+    $('dirty').textContent = v ? 'Unsaved changes' : 'Saved';
+    $('dirty').className = 'pill ' + (v ? 'pill--warn' : 'pill--sea');
+  }
+  $('save').onclick = function(){ setDirty(false); toast('Menu saved'); };
+  $('menuSel').onchange = function(e){ cur = e.target.value; render(); };
+  $('locSel').onchange = function(){ toast('Showing labels in ' + $('locSel').value + ' — structure is shared across languages'); };
+
+  var tTimer;
+  function toast(msg, undo){
+    $('toastMsg').textContent = msg;
+    $('undo').hidden = !undo;
+    $('toast').classList.add('show');
+    clearTimeout(tTimer); tTimer = setTimeout(hideToast, undo ? 5200 : 2400);
+  }
+  function hideToast(){ $('toast').classList.remove('show'); }
+
+  renderTabs(); renderSources(); render(); setDirty(false);
+})();
+</script>
