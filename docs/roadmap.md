@@ -61,12 +61,12 @@ and every failure branch in `booking-lifecycle.md` has a passing test — includ
 captured with reservation creation failing.
 
 ### Phase 4 — Real property integration · ~3–4 weeks, **externally gated**
-Build the connector the decision selects: `ChannelManagerConnector`, `OperaOwsConnector`, or
-`DelegatedBookingEngineConnector`. Code mapping UI, ARI sync, health monitoring, per-hotel
-rollout.
+Build `ChannelManagerConnector` against the selected vendor. Resort-code and rate/room code
+mapping UI, ARI push ingestion, two-stage confirmation with reconciliation, health
+monitoring, per-property rollout.
 
-**Blocked on** answers to the questions in `property-integration.md` §6. Nothing else in the
-project is blocked by it. Properties can go live one at a time, and a property can launch in
+**Blocked on** vendor selection and the API questions in `property-integration.md` §8.
+Nothing else in the project is blocked by it. Properties can go live one at a time, and a property can launch in
 delegated mode and switch to native later by changing one configuration row.
 
 ### Phase 5 — Admin dashboards & reporting · ~2 weeks
@@ -101,9 +101,10 @@ launch in delegated mode without waiting.
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Integration decision drags | Delays Phase 4 only | Mock connector unblocks everything else; delegated mode is a working launch path |
-| Channel-manager contract excludes a direct-booking API | Forces the OPERA route | Verify contract scope now, before Phase 3 ends — it is a phone call, not a project |
-| OWS not licensed on some properties | Mixed integration types across hotels | Per-hotel connector configuration is designed for exactly this |
+| Vendor selection drags | Delays Phase 4 only | Mock connector unblocks everything else; delegated mode is a working launch path |
+| CM contract excludes a direct-booking API | The checkout becomes the vendor's UI, not ours — the design stops at the Book button | Make it a selection criterion between SiteMinder, STAAH, and SmartHOTEL rather than a discovery after signing |
+| **One shared OPERA behind all three hotels** | A single outage takes the whole group offline, where three installations would have isolated it | ARI is pushed and stored, so search and browsing survive an outage; only reservation creation queues. This is why `InventorySnapshot` is not optional |
+| OPERA confirmation number never arrives over OXI | Guest holds a confirmed booking the hotel cannot see | Reconciliation job flags any booking missing its PMS number past a threshold, as an admin queue |
 | ARI sync latency causes oversell | Guest-facing failure and a refund | Allotment buffer, stop-sell threshold, and a mandatory live `quote()` before payment |
 | A locale's content lags English at launch | Half-translated site that looks broken and gets indexed as a mixture | The publish gate blocks enabling a locale until UI strings and published content are complete; machine pre-fill plus agency import keeps the review effort tractable across seven languages |
 | Translation cost scales with seven locales | Budget overrun, or locales that never launch | Locales are enabled one at a time on their own schedule; English ships alone if needed, and each additional language is an independent decision with no engineering cost |
@@ -112,11 +113,15 @@ launch in delegated mode without waiting.
 
 ## Open decisions
 
-1. **Which channel manager does each hotel use, and does the contract include a
-   direct-booking API?** The single highest-value question in the project.
-2. **Is OPERA Web Services licensed on any of the three installations?**
-3. **Will hotel IT permit site-to-site VPN from our API?**
-4. **Does any hotel already have a third-party booking engine under contract?**
+1. **Which channel manager, and does the contract include a booking-engine / connectivity
+   API for third-party direct booking** — as distinct from their own hosted booking engine?
+   The single highest-value question in the project: it decides whether the checkout is ours
+   or the vendor's.
+2. **Are reservation modification and cancellation available through that API**, or only
+   creation? Sets the capability flags and whether guests can self-serve.
+3. **How are direct-channel rate plans scoped**, separately from OTA rates?
+4. **Is multi-property supported on one CM account**, with all three resort codes under one
+   set of credentials?
 5. Real hotel names, cities, and brand identity — currently placeholders in the seed data,
    changeable from admin without a deploy.
 6. **Which locales launch first, and in what order.** English is the default and ships with

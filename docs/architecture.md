@@ -6,9 +6,11 @@ Four constraints drive every decision below.
 
 1. **Multi-property from day one.** Nothing may assume a single hotel, a shared room-type
    catalogue, or identical policies. Adding Hotel D is configuration.
-2. **The distribution backend is not yet decided.** It may be a channel manager, OPERA
-   directly, or a third-party booking engine — and it may differ per hotel. The
-   architecture must not bet on one.
+2. **One OPERA, three properties, and a channel manager in front of it.** All three hotels
+   run on a **single multi-property OPERA 5.6 on-premise installation**, distinguished by
+   resort code, with OXI licensed. The channel manager will be SiteMinder, STAAH, or
+   SmartHOTEL. This is simpler than three separate integrations — but it also means one
+   shared point of failure, which the caching strategy has to answer for.
 3. **SEO is a primary revenue channel.** Group site, destination pages, hotel pages, and
    offer landing pages must all be independently indexable, server-rendered, and fast.
 4. **English default, up to seven admin-managed locales.** Languages are database rows, not
@@ -41,15 +43,23 @@ Four constraints drive every decision below.
         │                │ │ BullMQ     │ │ Layer            │
         └────────────────┘ └────────────┘ └────────┬─────────┘
                                                    │
-                             ┌─────────────────────┼─────────────────────┐
-                             ▼                     ▼                     ▼
-                    ChannelManagerConnector  OperaOwsConnector   DelegatedBEConnector
-                             │                     │                     │
-                             ▼                     ▼                     ▼
-                    Channel Manager          Hotel OPERA 5.6      Third-party booking
-                    (SiteMinder/D-EDGE/…)    (on-premise, VPN)    engine (redirect)
-                             │                     │
-                             └──────► Hotel A / B / C OPERA ◄────┘
+                             ┌─────────────────────┴─────────────────────┐
+                             ▼                                           ▼
+                    ChannelManagerConnector                     DelegatedBEConnector
+                    (SiteMinder / STAAH / SmartHOTEL)           (fallback, per hotel)
+                             │                                           │
+                             │  public internet, API key                 │
+                             ▼                                           ▼
+                    ┌──────────────────┐                        Third-party engine
+                    │ Channel Manager  │                        (redirect handoff)
+                    └────────┬─────────┘
+                             │  OXI  (licensed, hotel-side)
+                             ▼
+                    ┌────────────────────────────────────┐
+                    │  ONE multi-property OPERA 5.6      │
+                    │  on-premise                        │
+                    │  resort codes: CAI · ALX · RSG     │
+                    └────────────────────────────────────┘
 
                     ┌──────────────────────────┐
                     │  apps/admin  (Next.js)   │  separate deploy, IP-restricted
@@ -60,15 +70,20 @@ Four constraints drive every decision below.
 
 ### Why the API is a separate deployable
 
-The single strongest reason: **OPERA 5.6 is on-premise.** Reaching it means a long-lived
-process inside a network that has site-to-site VPN or private links to each hotel. That is
-not a serverless workload. Separating `apps/api` also gives us:
+On the channel-manager path we need no network access to OPERA at all — the CM reaches it
+over OXI from the hotel side, and we reach the CM over the public internet with an API key.
+So the reasons are these instead:
 
-- Queues and scheduled ARI syncs that must survive between HTTP requests.
-- Integration credentials that never sit in the same process as public page rendering.
-- Independent scaling: content traffic is spiky and cacheable; booking traffic is not.
-- The option to later extract a connector into an on-premise gateway per hotel without
-  touching the booking engine.
+- **A persistent endpoint to receive ARI pushes.** The CM pushes rate and availability
+  updates to us continuously. That is a long-lived listener, not a request handler.
+- **Queues that survive between requests** — reservation creation with retries, ARI
+  processing, reconciliation of asynchronous OPERA confirmation numbers.
+- **Integration and payment credentials** that never sit in the process rendering public
+  pages.
+- **Independent scaling** — content traffic is spiky and cacheable; booking traffic is not.
+- **The escape hatch:** if the group later goes OPERA-direct, the connector can move into an
+  on-premise gateway without the booking engine changing. Keeping it separate now means that
+  is a deployment change rather than a rewrite.
 
 The public site still talks to the API through Next.js route handlers acting as a thin
 BFF, so the browser never holds an API credential and we keep one origin.
@@ -202,7 +217,8 @@ hotels-cms/
 | --- | --- | --- | --- |
 | CDN | Marketing pages, images, static assets | long | Deploy + on-demand purge on publish |
 | ISR | Hotel, destination, offer pages | 5 min | Tag-based revalidation on content publish |
-| Redis | Availability and rates per hotel/date-range/occupancy | 3–10 min, per connector | ARI push, manual flush, booking creation |
+| Postgres | `InventorySnapshot` — ARI pushed by the channel manager | continuous | Each ARI push |
+| Redis | Assembled search results per hotel/date-range/occupancy | 3–10 min | ARI push, manual flush, booking creation |
 | Redis | Compiled translation bundles, one per locale | until publish | String edit or locale publish; versioned by hash |
 | Redis | Idempotency keys | 24 h | Expiry only |
 | Postgres | Nothing cached; source of truth for bookings and content | — | — |
@@ -222,7 +238,13 @@ correlation ID. When a property's integration is open-circuit:
 - Admin integration health shows the breaker state and the last error, with credentials
   redacted.
 
-One property being down never degrades the group site.
+**The shared-OPERA caveat.** With all three properties on one installation, a single outage
+takes all three offline at once — the isolation that three separate installations would have
+given us does not exist. The answer is the ARI snapshot: because availability and rates are
+**pushed** to us and stored, browsing and search keep working normally through an OPERA
+outage. Only new reservation creation queues up. That is a far better failure mode than a
+live-query architecture would have had, and it is the main reason the snapshot table is not
+optional here.
 
 ## 8. Security posture
 

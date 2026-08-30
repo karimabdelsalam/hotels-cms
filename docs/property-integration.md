@@ -89,80 +89,96 @@ confirmation number. No conditional logic anywhere asks "is this hotel on OPERA?
 from cache. A quote is a fresh, authoritative, itemised price with taxes and fees, fetched
 immediately before payment. **A cached price is never the price the guest pays.**
 
-## 3. The implementations
+## 3. The environment we are actually integrating with
 
-### `ChannelManagerConnector` — recommended primary path
+Confirmed, and it changes several earlier assumptions for the better:
 
-A channel manager already holds a certified two-way integration with each hotel's OPERA
-(usually over OXI), and exposes a modern API to partners. That work is done, tested, and
-supported by a vendor.
+- **One multi-property OPERA 5.6 on-premise installation** hosts all three hotels,
+  distinguished by resort code — not three separate installations.
+- **OXI is licensed** for all three properties.
+- The channel manager will be **SiteMinder, STAAH, or SmartHOTEL**.
+- No third-party booking engine is under contract; one would likely come from the same
+  vendor as the channel manager.
 
-- **Availability and rates:** the CM pushes ARI updates to a webhook endpoint; we maintain
-  a synced inventory table plus a short Redis cache. Some CMs also offer a pull endpoint
-  for verification.
-- **Reservations:** pushed to the CM (`OTA_HotelResNotifRQ` or the vendor's REST
-  equivalent), which writes into OPERA and returns a confirmation number.
-- `liveAvailability: false`, `instantConfirmation: true` for most vendors.
+What this buys us: **one integration, one credential set, one endpoint, one mapping
+exercise.** The per-hotel connector configuration still exists — each property has its own
+resort code, room codes, and rate codes — but they share one connection.
 
-**Advantages:** one integration instead of three; no VPN into hotel networks; no Oracle
-licensing negotiation; vendor-supported; the hotels most likely already pay for it.
+What it costs us: **one shared point of failure.** Three separate installations would have
+isolated an outage to one property. Here, one outage is all three. See §7.
 
-**What to verify before committing:** which CM each hotel uses, whether the contract
-includes a **direct-booking / booking-engine API** (distinct from OTA distribution, and
-often a separate SKU), rate-plan visibility for direct channels, and the ARI push latency.
+## 4. The implementations
 
-**The real trade-off:** ARI is a synced picture, not a live query. Between the last push
-and a booking there is a window where inventory can move. Mitigate with an allotment
-buffer per room type, a stop-sell threshold, and a mandatory `quote()` before payment.
+### `ChannelManagerConnector` — the path
 
-### `OperaOwsConnector` — best control, highest cost
+The channel manager talks to OPERA over **OXI, from the hotel side**, using the licence
+already in place. We talk to the channel manager over the public internet with an API key.
 
-OPERA Web Services is SOAP/XML and **synchronous**: real-time availability, rates, and
-reservation creation. This is the correct interface for a custom booking engine.
+```
+  our API  ──HTTPS/API key──►  SiteMinder / STAAH / SmartHOTEL
+                                          │
+                                        OXI (hotel-side, licensed)
+                                          ▼
+                              one multi-property OPERA 5.6
+                              resort codes: CAI · ALX · RSG
+```
 
-- Requires the OWS component to be licensed and installed, plus site-to-site VPN or a
-  private link from `apps/api` to each property.
-- One connector instance per hotel: its own endpoint, credentials, hotel code, and chain
-  code. Never one shared database connection.
-- `liveAvailability: true`, `instantConfirmation: true`.
+- **Availability and rates:** the CM pushes ARI updates to our webhook endpoint; we keep an
+  `InventorySnapshot` per resort code, room type, rate plan, and date, plus a short Redis
+  cache over the assembled search results.
+- **Reservations:** pushed to the CM, which delivers them into OPERA over OXI.
 
-**Cost:** three separate installations to license, network access to negotiate with each
-hotel's IT, and SOAP envelopes to maintain. Realistically the longest lead time in the
-project, and mostly outside our control.
+**The single most important question to put to the vendor:** ask for their
+**booking-engine / connectivity API for third-party direct booking** — explicitly *not*
+their hosted booking engine product. These are different SKUs, and sales will offer the
+hosted product by default because it is the bigger sale. All three vendors have their own
+booking engine; what we need is the API underneath it.
 
-### A note on OXI — worth reading before deciding
+Also worth confirming: rate-plan visibility for the direct channel (direct rates are often
+scoped separately from OTA rates), ARI push latency, and whether reservation modification
+and cancellation are supported through the same API or only creation.
 
-OXI is not a real-time web API. It is an **asynchronous, message-queue interface engine**
-built for exchanging business messages between OPERA and an external system — classically a
-CRS or channel manager. It handles ARI download and reservation upload well. It was not
-designed for a guest waiting for an availability response inside a checkout.
+### Two-stage confirmation — a detail worth designing for
 
-Practically this means:
+OXI is asynchronous, so the **OPERA confirmation number does not come back in the same
+breath as the booking**. Most channel managers return their own reservation ID
+synchronously, with the PMS confirmation following minutes later.
 
-- **Using OXI for ARI is sound.** Subscribe to rate and availability messages, keep our own
-  inventory picture, serve search from it. This is exactly what a channel manager does.
-- **Using OXI for reservation creation costs you instant confirmation.** You send a message
-  and acknowledge later, so checkout ends in "pending confirmation" rather than a
-  confirmation number. Workable — `instantConfirmation: false` handles it — but it is a
-  real downgrade in conversion and in guest trust, and it complicates the payment/booking
-  consistency rules in `booking-lifecycle.md`.
-- **The strongest OPERA-direct setup is OXI for ARI plus OWS for booking**, which needs
-  both licensed.
+So the connector confirms in two stages:
 
-So: "connect to OPERA over OXI directly" is possible, but if it is chosen, it should be
-chosen knowing it buys asynchronous confirmation, and that a channel manager gives the same
-data path with a supported API and none of the VPN work.
+1. **CM reservation ID returns synchronously** → the booking is `CONFIRMED`, and the guest
+   sees our booking reference immediately. The guest journey is not asynchronous.
+2. **OPERA confirmation number arrives later** over the CM's status callback or a
+   reconciliation poll → stored on the booking and shown in My Booking and to the
+   reservations team.
 
-### `DelegatedBookingEngineConnector` — the bridge
+`instantConfirmation: true` therefore holds on this path — the guest is never left waiting.
+A reconciliation job flags any booking still missing its PMS confirmation number after a
+threshold, so a silent OXI delivery failure surfaces as a queue rather than as a guest
+arriving at a hotel with no reservation.
 
-Wraps a third-party engine (SynXis, D-EDGE, Bookassist, Profitroom, Cloudbeds, or the
-channel manager's own engine). Implements `getHotelInfo()` and, where the vendor exposes
-one, an indicative starting price. `createReservation()` throws by design — the mode is
-`delegated`, and the funnel hands off.
+### `OperaOwsConnector` — kept as an option, not the plan
 
-What it must still do: build a correctly parameterised deep link (property code, dates,
-occupancy, promo code, locale, currency) and emit a `booking_handoff` analytics event so we
-can measure what we are giving away.
+Real-time availability and reservation creation straight into OPERA, bypassing the CM. Now
+simpler than originally assumed, because there is one installation rather than three — one
+endpoint, one credential set, one resort-code parameter.
+
+It stays unbuilt for now. It would only be worth it if the CM's direct-booking API proves
+inadequate, or if live per-request availability turns out to matter more than the ARI
+snapshot delivers. Requires the OWS component licensed (separate from OXI) and a network
+path — see §5.
+
+### `DelegatedBookingEngineConnector` — the fallback
+
+Kept implemented because it costs little and removes a whole class of schedule risk. If the
+CM's direct API is unavailable or its terms are unacceptable, a property can launch against
+the vendor's hosted booking engine and switch to native mode later by changing one
+configuration row.
+
+The trade-off is real and worth stating plainly: **the hosted booking engine is the
+vendor's UI, not ours.** The design work stops at the Book button. For a group that wants a
+world-class site, that is the last place to compromise — which is exactly why the API
+question above is the one to press hardest on.
 
 ### `MockConnector` — the one that unblocks everything
 
@@ -171,12 +187,35 @@ Egyptian room types, rate plans, and EGP pricing. It implements the full interfa
 capability combination.
 
 This is not a stopgap; it is a first-class deliverable. **All of Phases 1–3 are built and
-tested against it.** It means the website, booking engine, payment flow, and admin can be
-finished and demoed before a single decision about OPERA, channel managers, or vendors is
-made. It also stays in CI permanently, because integration tests cannot depend on a live
-hotel system.
+tested against it**, so the website, booking engine, payment flow, and admin can be finished
+and demoed before the vendor conversation concludes. It also stays in CI permanently,
+because integration tests cannot depend on a live hotel system.
 
-## 4. Selecting a connector
+## 5. Network access — why, and how much
+
+Worth answering directly, because the amount of network work depends entirely on which path
+is taken.
+
+**On the channel-manager path: none.** No VPN, no firewall change, no tunnel. The CM is a
+cloud service reachable over HTTPS; we authenticate with an API key. OPERA is reached by the
+CM from inside the hotel network over the OXI licence already in place. Nothing of ours ever
+touches the hotel LAN. This is a significant part of why the CM path is the recommended one.
+
+**On an OPERA-direct path: some private route is required**, because OPERA 5.6 on-premise
+sits on a private network with a private address. There are four ways to get one, in
+descending order of how easily IT tends to approve them:
+
+| Option | What it means | Trade-off |
+| --- | --- | --- |
+| **Outbound-only gateway** | A small connector service we deploy inside the hotel network; it holds the OPERA connection and dials **out** to our API over mTLS | No inbound firewall rules to open, nothing exposed to the internet. Usually the easiest approval. One more component to operate |
+| **Colocation** | Run our API in the same datacentre as OPERA | No VPN at all. Only viable if the group has its own DC and wants to host there |
+| **Site-to-site VPN** | Standard IPsec tunnel between our infrastructure and the hotel network | Well understood, but needs network engineering on both sides and IT sign-off |
+| **Public exposure with TLS and an IP allowlist** | Publish the OPERA interface endpoint to the internet | **Not recommended.** A PMS holds guest identity and payment data; most hotel IT and most auditors will refuse, correctly |
+
+So the earlier framing was too narrow: a site-to-site VPN is one option among several, and
+on the path we are actually recommending, the question does not arise at all.
+
+## 6. Selecting a connector
 
 ```
 ConnectorRegistry.for(hotelId)
@@ -189,45 +228,69 @@ ConnectorRegistry.for(hotelId)
 Every connector is wrapped in the same decorator chain. Resilience is not each
 implementation's responsibility, so it cannot be forgotten in one of them.
 
-Circuit-breaker state is per hotel. When one property's integration is open:
+Circuit-breaker state is tracked **per hotel and per shared environment**, because on this
+topology they are not the same thing. A resort-code-specific rejection trips one property; a
+channel-manager or OPERA outage trips all three at once.
 
-- group search excludes it and records the reason,
-- its property page stays fully browsable with an enquiry CTA,
+When a breaker is open:
+
+- group search excludes the affected properties and records the reason as `degraded`,
+  distinct from `no availability`,
+- property pages stay fully browsable with an enquiry CTA,
 - admin integration health shows breaker state and last error, credentials redacted.
 
-## 5. Mapping external codes
+**Because ARI is pushed and stored, search and browsing survive an outage entirely** — they
+read the snapshot, not the live system. Only new reservation creation queues. This is the
+main compensation for having one shared installation instead of three.
+
+## 7. Mapping external codes
 
 Our entities and the property's codes are never assumed to match. Mapping is explicit,
 editable in admin, and validated.
 
 | Ours | External | Where |
 | --- | --- | --- |
+| `Hotel.id` | OPERA **resort code** (`CAI`, `ALX`, `RSG`) | `HotelIntegration` |
 | `RoomType.id` | `external_code` | per hotel |
 | `RatePlan.id` | `external_code` | per hotel |
-| `Hotel.id` | `hotel_code` / chain code | `HotelIntegration` |
-| `Booking.reference` | `external_reservation_id` | `Booking` |
+| `Booking.reference` | CM reservation ID | `Booking.external_reservation_id` |
+| `Booking.reference` | OPERA confirmation number | `Booking.external_confirmation_number`, arrives later |
+
+The resort code is what makes one connection serve three hotels. Everything else —
+endpoint, credentials, chain code — is shared and lives on a single `IntegrationEnvironment`
+row that all three `HotelIntegration` rows reference.
 
 External identifiers are stored verbatim and never regenerated. Unmapped codes arriving
 from an ARI sync surface in admin as **needs mapping** rather than being silently dropped —
 silent drops are how inventory quietly disappears from a website.
 
-## 6. Recommendation
+## 8. Recommendation
 
-Ranked for the stated goal of *one unified group booking experience*:
+Given what is now confirmed — one multi-property OPERA, OXI licensed, a channel manager
+being selected, and no booking engine under contract — the path is clear:
 
-1. **Channel manager**, if the contract includes a direct-booking API. Fastest credible
-   path to native mode across all three hotels, one integration, no VPN.
-2. **OPERA OWS**, if it is licensed and hotel IT will provide network access. Best control
-   and true live availability; longest lead time.
-3. **OXI for ARI, plus OWS or the CM for reservations.** Sound hybrid if OWS exists.
-4. **Delegated third-party engine**, per hotel, as a bridge or a permanent fallback for any
-   property whose system cannot support native mode.
+**Integrate through the channel manager's direct-booking API, in native mode, for all three
+properties.** No network access to the hotel is needed, the CM already carries the OXI
+integration, and one connection serves all three resort codes. Two-stage confirmation keeps
+the guest experience instant while the OPERA confirmation number reconciles behind it.
 
-**What is needed to decide** — and none of it blocks development, because Phases 1–3 run on
-the mock connector:
+Keep `DelegatedBookingEngineConnector` implemented as insurance, and leave
+`OperaOwsConnector` designed but unbuilt.
 
-- Which channel manager each of the three hotels uses today, and whether the contract
-  covers a booking-engine/direct API.
-- Whether OWS is licensed on any of the three OPERA installations.
-- Whether hotel IT will permit site-to-site VPN from our API.
-- Whether any hotel already has a third-party booking engine under contract.
+### Still to confirm with the vendor
+
+Vendor selection between SiteMinder, STAAH, and SmartHOTEL should turn mostly on these, not
+on channel-distribution features:
+
+1. **Does the contract include a booking-engine / connectivity API for third-party direct
+   booking** — separate from their own hosted booking engine product? This is the question
+   that decides whether the checkout is ours or theirs.
+2. Are reservation **modification and cancellation** supported through that API, or only
+   creation? This sets the `capabilities` flags and determines whether guests can self-serve.
+3. How are **direct-channel rate plans** scoped and made visible, as distinct from OTA rates?
+4. What is the **ARI push latency**, and is there a pull endpoint for verification?
+5. Is the **OPERA confirmation number** returned through a status callback, or must we poll?
+6. Is **multi-property supported on one account**, with all three resort codes under a single
+   set of credentials?
+
+None of this blocks development. Phases 1–3 run entirely on the mock connector.
