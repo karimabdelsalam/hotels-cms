@@ -1,29 +1,34 @@
 # Running on a subdomain, beside the live site
 
-For putting this on `demo.fantaziaresorts.com` (or `new.`, or `staging.`) on the
-cPanel server that already serves the current site — **without touching it**.
+Written for **`ihotel.planova.com.eg`**, which is where this is going first.
+Substitute your own hostnames if that changes; nothing below depends on the
+names themselves.
 
 This is not the launch guide. `deployment.md` covers taking over a main domain.
 This covers standing the platform up next to what is already there, which is
 what you want first: everything real to look at, nothing at risk.
 
-Substitute throughout:
-
-| | Example used here |
+| | Used throughout |
 | --- | --- |
-| cPanel account user | `fantazia` |
-| public subdomain | `demo.fantaziaresorts.com` |
-| admin subdomain | `demo-admin.fantaziaresorts.com` |
+| cPanel account user | `planova` — **check yours**, it is whatever owns `planova.com.eg` |
+| public site | `ihotel.planova.com.eg` |
+| admin portal | `ihotel-admin.planova.com.eg` |
+| instance name | `ihotel` — names the PM2 processes and the log directory |
+
+The cPanel user is the one thing here you must confirm rather than copy. `whoami`
+inside a cPanel terminal, or WHM → **List Accounts**, tells you.
 
 ---
 
 ## What you are about to have
 
 ```
-demo.fantaziaresorts.com          → the public site        (Node on 127.0.0.1:3100)
-demo-admin.fantaziaresorts.com    → the admin portal       (Node on 127.0.0.1:3101)
-                                    the worker             (no port; retries, emails)
-fantaziaresorts.com               → untouched, still your live site
+ihotel.planova.com.eg         →  the public site      Node on 127.0.0.1:3100
+ihotel-admin.planova.com.eg   →  the admin portal     Node on 127.0.0.1:3101
+                                 the worker           no port — retries, emails
+
+planova.com.eg                →  untouched
+fantaziaresorts.com           →  untouched, still your live site
 ```
 
 **Ports 3100 and 3101, not 3000 and 3001.** Whatever is on the box now may
@@ -38,9 +43,9 @@ the two can run side by side during cutover.
 
 **cPanel → Domains → Create A Domain**, twice.
 
-Create `demo.fantaziaresorts.com` and `demo-admin.fantaziaresorts.com` on the
+Create `ihotel.planova.com.eg` and `ihotel-admin.planova.com.eg` on the
 **existing account**. cPanel offers a document root of
-`/home/fantazia/demo.fantaziaresorts.com` — accept it. Do the same for the admin
+`/home/planova/ihotel.planova.com.eg` — accept it. Do the same for the admin
 one.
 
 Do not tick "Share document root with the main domain."
@@ -55,10 +60,10 @@ header expires.
 ## 2. Where things live
 
 ```
-/home/fantazia/demo-app                              the repository   ← NOT a document root
-/home/fantazia/demo.fantaziaresorts.com/media        uploads          ← Apache serves these
-/home/fantazia/demo-backups                          dumps
-/var/log/fantazia-demo                               PM2 logs
+/home/planova/ihotel-app                              the repository   ← NOT a document root
+/home/planova/ihotel.planova.com.eg/media        uploads          ← Apache serves these
+/home/planova/ihotel-backups                          dumps
+/var/log/ihotel                               PM2 logs
 ```
 
 **The repository must not be inside any document root.** Everything under a
@@ -71,17 +76,17 @@ already serves that directory, so images need no proxy rule and Node never sees
 an image request.
 
 ```bash
-mkdir -p /home/fantazia/demo-app /home/fantazia/demo-backups
-mkdir -p /home/fantazia/demo.fantaziaresorts.com/media
-mkdir -p /var/log/fantazia-demo
-chown -R fantazia:fantazia /home/fantazia /var/log/fantazia-demo
+mkdir -p /home/planova/ihotel-app /home/planova/ihotel-backups
+mkdir -p /home/planova/ihotel.planova.com.eg/media
+mkdir -p /var/log/ihotel
+chown -R planova:planova /home/planova /var/log/ihotel
 ```
 
 Nothing in the media directory may execute — it is a directory the public can
 write into through the upload form:
 
 ```apache
-# /home/fantazia/demo.fantaziaresorts.com/media/.htaccess
+# /home/planova/ihotel.planova.com.eg/media/.htaccess
 Options -Indexes -ExecCGI
 RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .cgi .pl
 php_flag engine off
@@ -119,8 +124,8 @@ apt-get install -y postgresql-16
 
 ```bash
 sudo -u postgres psql <<'SQL'
-CREATE USER fantazia_demo WITH PASSWORD 'put-a-long-random-one-here';
-CREATE DATABASE fantazia_demo OWNER fantazia_demo;
+CREATE USER ihotel WITH PASSWORD 'put-a-long-random-one-here';
+CREATE DATABASE ihotel OWNER ihotel;
 SQL
 ```
 
@@ -135,14 +140,14 @@ not be reachable from outside the box.
 
 ## 4. The code
 
-As the **`fantazia` user**, not root. Files owned by root under a cPanel home
+As the **`planova` user**, not root. Files owned by root under a cPanel home
 directory will fight suexec.
 
 ```bash
-su - fantazia
+su - planova
 git clone -b claude/rotana-website-design-bs9ylt \
-  https://github.com/karimabdelsalam/hotels-cms.git /home/fantazia/demo-app
-cd /home/fantazia/demo-app
+  https://github.com/karimabdelsalam/hotels-cms.git /home/planova/ihotel-app
+cd /home/planova/ihotel-app
 pnpm install --frozen-lockfile
 ```
 
@@ -157,17 +162,24 @@ nano .env
 ```
 
 ```bash
-DATABASE_URL="postgresql://fantazia_demo:the-password@127.0.0.1:5432/fantazia_demo?schema=public&connection_limit=5"
+DATABASE_URL="postgresql://ihotel:the-password@127.0.0.1:5432/ihotel?schema=public&connection_limit=5"
 
 # Not optional and not a placeholder. Generate it:  openssl rand -base64 48
 AUTH_SECRET="…at least 32 characters…"
 
-NEXT_PUBLIC_SITE_URL="https://demo.fantaziaresorts.com"
+NEXT_PUBLIC_SITE_URL="https://ihotel.planova.com.eg"
+
+# Which instance this is. Drives the PM2 process names, ports and log path,
+# so the demo and a later production install can run side by side.
+INSTANCE="ihotel"
+WEB_PORT="3100"
+ADMIN_PORT="3101"
+LOG_DIR="/var/log/ihotel"
 
 # ABSOLUTE. A relative path resolves against each app's own working directory,
 # so the admin would write images the public site could not read. Production
 # refuses to start on a relative value.
-MEDIA_ROOT="/home/fantazia/demo.fantaziaresorts.com/media"
+MEDIA_ROOT="/home/planova/ihotel.planova.com.eg/media"
 
 REVALIDATE_SECRET="openssl rand -hex 24"
 
@@ -183,8 +195,11 @@ SMTP_HOST=""
 SMTP_PORT="587"
 SMTP_USER=""
 SMTP_PASSWORD=""
-SMTP_FROM="reservations@fantaziaresorts.com"
-RESERVATIONS_EMAIL="reservations@fantaziaresorts.com"
+# Use an address on a domain this server is actually authorised to send for,
+# or the messages land in spam. planova.com.eg has the SPF record here;
+# fantaziaresorts.com probably does not.
+SMTP_FROM="ihotel@planova.com.eg"
+RESERVATIONS_EMAIL="ihotel@planova.com.eg"
 
 # Only if you want the AI translation button to work.
 ANTHROPIC_API_KEY=""
@@ -195,7 +210,7 @@ ANTHROPIC_API_KEY=""
 ## 6. Database, then content
 
 ```bash
-cd /home/fantazia/demo-app
+cd /home/planova/ihotel-app
 
 pnpm --filter @fantazia/db exec prisma generate
 pnpm --filter @fantazia/db exec prisma migrate deploy
@@ -225,26 +240,30 @@ pnpm --filter @fantazia/db seed:demo -- --clear
 pnpm build
 ```
 
-Then the process definitions. The committed `infra/ecosystem.config.cjs` uses
-3000/3001; for a demo beside a live site, use a copy with your own ports:
+Then start the three processes. **Nothing is copied or edited** — the committed
+`infra/ecosystem.config.cjs` reads its ports, process names and log directory
+from the environment, so a demo beside a live install differs by three variables
+rather than by a forked file that stops receiving fixes.
+
+Put these in `.env` alongside the rest:
 
 ```bash
-cp infra/ecosystem.config.cjs infra/ecosystem.demo.cjs
+INSTANCE="ihotel"          # names the PM2 processes: ihotel-web, -admin, -worker
+WEB_PORT="3100"
+ADMIN_PORT="3101"
+LOG_DIR="/var/log/ihotel"
 ```
 
-In the copy, change the three `name:` values to `fantazia-demo-web`,
-`fantazia-demo-admin`, `fantazia-demo-worker`, the two ports to 3100 and 3101,
-and the log paths to `/var/log/fantazia-demo/`.
-
 ```bash
-pm2 start infra/ecosystem.demo.cjs
+set -a && source .env && set +a     # PM2 needs them in its own environment
+pm2 start infra/ecosystem.config.cjs
 pm2 save
 pm2 status
 ```
 
 ```bash
 # as root, once — replays the saved process list after a reboot
-pm2 startup systemd -u fantazia --hp /home/fantazia
+pm2 startup systemd -u planova --hp /home/planova
 ```
 
 Three processes must show `online`. The worker is not optional: without it,
@@ -253,7 +272,7 @@ paid bookings stop being retried and confirmation emails are never sent.
 ```bash
 curl -sI http://127.0.0.1:3100/api/health
 curl -sI http://127.0.0.1:3101/api/health
-pm2 logs fantazia-demo-worker --lines 20
+pm2 logs ihotel-worker --lines 20
 ```
 
 ---
@@ -267,32 +286,29 @@ pm2 logs fantazia-demo-worker --lines 20
 vhost.** WHM regenerates vhosts on any Apache rebuild and would discard a vhost
 edit silently, usually at the worst moment.
 
+There are four files to write — two hosts × plain and SSL — each needing the
+account name, the application path and the right port substituted. Doing that by
+hand is the step most likely to go wrong, and it goes wrong *quietly*: a missed
+port sends admin traffic to the public site, and a missed path makes
+`/_next/static` return 404 so the site loads with no styling at all.
+
+`infra/apache/install.sh` does the substitution and checks the result:
+
 ```bash
 # as root
-D=/etc/apache2/conf.d/userdata
-A=/home/fantazia/demo-app/infra/apache
-
-for host in demo.fantaziaresorts.com demo-admin.fantaziaresorts.com; do
-  mkdir -p $D/std/2_4/fantazia/$host $D/ssl/2_4/fantazia/$host
-done
-
-cp $A/fantazia.conf       $D/std/2_4/fantazia/demo.fantaziaresorts.com/
-cp $A/fantazia.conf       $D/ssl/2_4/fantazia/demo.fantaziaresorts.com/
-cp $A/fantazia-admin.conf $D/std/2_4/fantazia/demo-admin.fantaziaresorts.com/
-cp $A/fantazia-admin.conf $D/ssl/2_4/fantazia/demo-admin.fantaziaresorts.com/
+/home/planova/ihotel-app/infra/apache/install.sh \
+  --user    planova \
+  --app     /home/planova/ihotel-app \
+  --public  ihotel.planova.com.eg       --public-port 3100 \
+  --admin   ihotel-admin.planova.com.eg --admin-port  3101
 ```
 
-Then edit the four copies. Each ships with `<user>` placeholders and the default
-ports:
-
-- `<user>` → `fantazia`
-- `/home/<user>/app/` → `/home/fantazia/demo-app/`
-- `127.0.0.1:3000` → `127.0.0.1:3100` (public files)
-- `127.0.0.1:3001` → `127.0.0.1:3101` (admin files)
+It refuses to run if the app is not built, if the userdata directory is not
+where it expects, or if a placeholder survives the substitution — then runs
+`ensure_vhost_includes` and `apachectl configtest` for you.
 
 ```bash
-/scripts/ensure_vhost_includes --all-users
-apachectl configtest && systemctl restart httpd
+systemctl restart httpd
 ```
 
 Verify the include path against your cPanel version — **WHM → Apache
@@ -307,19 +323,19 @@ request.
 ## 9. Check it
 
 ```bash
-curl -sI https://demo.fantaziaresorts.com/en | head -3
-curl -sI https://demo-admin.fantaziaresorts.com/login | head -3
+curl -sI https://ihotel.planova.com.eg/en | head -3
+curl -sI https://ihotel-admin.planova.com.eg/login | head -3
 ```
 
 Then in a browser, in this order — each answers a different question:
 
-1. `https://demo.fantaziaresorts.com/en` — the site is up and images render
-2. `https://demo.fantaziaresorts.com/ar` — Arabic, right-to-left
+1. `https://ihotel.planova.com.eg/en` — the site is up and images render
+2. `https://ihotel.planova.com.eg/ar` — Arabic, right-to-left
 3. Search dates on the homepage → results → pick a room → checkout → **Pay**
    → you should land on a confirmation with a reference and a hotel number
-4. `https://demo.fantaziaresorts.com/en/my-booking` — reference plus the email
+4. `https://ihotel.planova.com.eg/en/my-booking` — reference plus the email
    you entered finds it
-5. `https://demo-admin.fantaziaresorts.com` — sign in as
+5. `https://ihotel-admin.planova.com.eg` — sign in as
    `admin@fantazia.test` / `fantazia-dev`, and the booking you just made is
    in **Bookings**
 
@@ -334,7 +350,7 @@ A demo indexed alongside the live site competes with it for the same searches
 and splits the ranking. Until launch:
 
 ```apache
-# /home/fantazia/demo.fantaziaresorts.com/.htaccess
+# /home/planova/ihotel.planova.com.eg/.htaccess
 Header always set X-Robots-Tag "noindex, nofollow"
 ```
 
@@ -350,8 +366,8 @@ worth it if the demo is only for the team.
 ## 11. Pulling later changes
 
 ```bash
-su - fantazia
-cd /home/fantazia/demo-app
+su - planova
+cd /home/planova/ihotel-app
 git pull
 pnpm install --frozen-lockfile
 pnpm --filter @fantazia/db exec prisma migrate deploy

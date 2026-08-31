@@ -14,6 +14,23 @@
 const path = require("path");
 const root = path.resolve(__dirname, "..");
 
+/**
+ * Ports, names and log paths come from the environment.
+ *
+ * A demo running beside a live install needs different ports and different
+ * process names, and copying this file to change three numbers means the copy
+ * stops receiving fixes made to the original. Set these in .env instead:
+ *
+ *   INSTANCE=ihotel  WEB_PORT=3100  ADMIN_PORT=3101
+ *
+ * Defaults are the production ones, so an install that sets nothing behaves
+ * exactly as it did before.
+ */
+const INSTANCE = process.env.INSTANCE || "fantazia";
+const WEB_PORT = Number(process.env.WEB_PORT || 3000);
+const ADMIN_PORT = Number(process.env.ADMIN_PORT || 3001);
+const LOG_DIR = process.env.LOG_DIR || `/var/log/${INSTANCE}`;
+
 /** Shared across both apps. Secrets come from the environment, never from here. */
 const common = {
   instances: 1,
@@ -33,27 +50,27 @@ module.exports = {
   apps: [
     {
       ...common,
-      name: "fantazia-web",
+      name: `${INSTANCE}-web`,
       cwd: path.join(root, "apps/web"),
       script: "node_modules/next/dist/bin/next",
-      args: "start --port 3000 --hostname 127.0.0.1",
-      env: { ...common.env, PORT: 3000 },
-      error_file: "/var/log/fantazia/web.error.log",
-      out_file: "/var/log/fantazia/web.out.log",
+      args: `start --port ${WEB_PORT} --hostname 127.0.0.1`,
+      env: { ...common.env, PORT: WEB_PORT },
+      error_file: `${LOG_DIR}/web.error.log`,
+      out_file: `${LOG_DIR}/web.out.log`,
     },
     {
       ...common,
-      name: "fantazia-admin",
+      name: `${INSTANCE}-admin`,
       cwd: path.join(root, "apps/admin"),
       script: "node_modules/next/dist/bin/next",
-      args: "start --port 3001 --hostname 127.0.0.1",
-      env: { ...common.env, PORT: 3001 },
-      error_file: "/var/log/fantazia/admin.error.log",
-      out_file: "/var/log/fantazia/admin.out.log",
+      args: `start --port ${ADMIN_PORT} --hostname 127.0.0.1`,
+      env: { ...common.env, PORT: ADMIN_PORT },
+      error_file: `${LOG_DIR}/admin.error.log`,
+      out_file: `${LOG_DIR}/admin.out.log`,
     },
     {
       ...common,
-      name: "fantazia-worker",
+      name: `${INSTANCE}-worker`,
       cwd: path.join(root, "apps/worker"),
       // node directly, with tsx as a loader — NOT the tsx binary. The tsx
       // binary spawns a child and does not forward SIGTERM, so `pm2 reload`
@@ -71,8 +88,8 @@ module.exports = {
       // lands, and the shutdown handler waits up to twenty seconds for it.
       kill_timeout: 25000,
       max_memory_restart: "300M",
-      error_file: "/var/log/fantazia/worker.error.log",
-      out_file: "/var/log/fantazia/worker.out.log",
+      error_file: `${LOG_DIR}/worker.error.log`,
+      out_file: `${LOG_DIR}/worker.out.log`,
     },
   ],
 };
