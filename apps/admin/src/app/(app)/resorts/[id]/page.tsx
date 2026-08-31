@@ -88,9 +88,20 @@ export default async function ResortEditPage({
         }))}
         rooms={resort.roomTypes.map((rt) => ({
           id: rt.id,
-          name: rt.translations.find((t) => t.localeCode === "en")?.name ?? "—",
-          maxOccupancy: rt.maxOccupancy,
           externalCode: rt.externalCode,
+          maxAdults: rt.maxAdults,
+          maxChildren: rt.maxChildren,
+          maxOccupancy: rt.maxOccupancy,
+          sizeSqm: rt.sizeSqm,
+          bedConfig: rt.bedConfig,
+          fromRateMinor: rt.fromRateMinor,
+          active: rt.active,
+          translations: rt.translations.map((t) => ({
+            localeCode: t.localeCode,
+            name: t.name,
+            slug: t.slug,
+            description: t.description,
+          })),
         }))}
         canWrite={actor.permissions.has("content:write")}
       />

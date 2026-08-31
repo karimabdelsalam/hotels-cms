@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { ImagePicker, type PickerAsset } from "@/components/editor/ImagePicker";
 import { saveResortDetails, saveResortTranslation, setResortHero } from "./actions";
+import { RoomsEditor, type Room } from "./RoomsEditor";
 
 type Locale = { code: string; nativeName: string; direction: string; isDefault: boolean };
 type Translation = {
@@ -40,7 +41,7 @@ export function ResortEditor({
   resort: Resort;
   locales: Locale[];
   translations: Translation[];
-  rooms: { id: string; name: string; maxOccupancy: number; externalCode: string | null }[];
+  rooms: Room[];
   assets: PickerAsset[];
   canWrite: boolean;
 }) {
@@ -104,41 +105,13 @@ export function ResortEditor({
           ))}
       </section>
 
-      <section className="card">
-        <h2>Room types</h2>
-        <div className="scroller">
-          <table>
-            <thead>
-              <tr>
-                <th>Room</th>
-                <th className="num">Sleeps</th>
-                <th>PMS code</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rooms.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <b>{r.name}</b>
-                  </td>
-                  <td className="num">{r.maxOccupancy}</td>
-                  <td>
-                    {r.externalCode ? (
-                      <code>{r.externalCode}</code>
-                    ) : (
-                      <span className="chip chip--warn">Needs mapping</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="note">
-          PMS codes stay empty until the OPERA mapping is done — content goes live without
-          waiting for the integration.
-        </p>
-      </section>
+      <RoomsEditor
+        resortId={resort.id}
+        rooms={rooms}
+        locales={locales}
+        currency={resort.currency}
+        canWrite={canWrite}
+      />
     </div>
   );
 }
