@@ -24,10 +24,12 @@ const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/media", label: "Media", permission: "content:read" },
   { href: "/translations", label: "Translations", permission: "content:read" },
   { href: "/modules", label: "Site sections", permission: "modules:write" },
-  { href: "/menus", label: "Menus", permission: "menus:write" },
+  { href: "/menus", label: "Menus", permission: "content:read" },
   { href: "/users", label: "Staff", permission: "users:manage" },
   { href: "/settings", label: "Settings", permission: "content:read" },
   { href: "/audit", label: "Audit log", permission: "audit:read" },
+  // No permission: this is the signed-in person's own account.
+  { href: "/account", label: "Your account" },
 ];
 
 export function Shell({

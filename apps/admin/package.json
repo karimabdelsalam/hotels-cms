@@ -13,8 +13,10 @@
     "@fantazia/db": "workspace:*",
     "@fantazia/media": "workspace:*",
     "@node-rs/argon2": "^2.0.2",
+    "@types/qrcode": "^1.5.6",
     "jose": "^5.9.6",
     "next": "15.1.6",
+    "qrcode": "^1.5.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "zod": "^3.24.1"

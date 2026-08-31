@@ -608,6 +608,11 @@ model User {
   lastName       String
   totpSecret     String?
   totpEnabled    Boolean   @default(false)
+  /// The last TOTP step this account signed in with. A code stays valid for
+  /// about ninety seconds, so without this a code read over someone's shoulder
+  /// can be used a second time. Steps must strictly increase.
+  totpLastStep   Int?
+  totpEnabledAt  DateTime?
   status         String    @default("active")
   lastLoginAt    DateTime?
   failedAttempts Int       @default(0)
@@ -616,13 +621,33 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  roles        UserRole[]
-  resortAccess UserResortAccess[]
-  auditEntries AuditLog[]
-  uploads      MediaAsset[]
-  translations TranslationString[]
+  roles         UserRole[]
+  resortAccess  UserResortAccess[]
+  auditEntries  AuditLog[]
+  uploads       MediaAsset[]
+  translations  TranslationString[]
+  recoveryCodes UserRecoveryCode[]
 
   @@map("users")
+}
+
+/// One-time codes for getting back in when the phone is gone.
+///
+/// Without these, enabling two-factor on the only super admin is one lost
+/// phone away from nobody being able to administer the site at all. Stored
+/// hashed with the same function as passwords: a leaked table must not hand
+/// anyone a way past the second factor.
+model UserRecoveryCode {
+  id       String    @id @default(cuid())
+  userId   String
+  codeHash String
+  usedAt   DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@map("user_recovery_codes")
 }
 
 model Role {

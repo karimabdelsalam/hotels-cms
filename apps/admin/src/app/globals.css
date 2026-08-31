@@ -313,6 +313,26 @@ a.stat:hover { border-color: var(--sea); transform: translateY(-2px); }
 .shot--pick:hover:not(:disabled) { border-color: var(--sea); }
 .shot--pick:disabled { opacity: 0.5; cursor: default; }
 
+/* ---------- two-step sign-in ---------- */
+.enrol { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+/* The QR is a black-on-white SVG, so it keeps a white ground of its own
+   rather than inheriting the panel and becoming unreadable in dark mode. */
+.qr { background: #fff; padding: 10px; border-radius: 12px; border: 1px solid var(--line);
+  line-height: 0; }
+.qr svg { display: block; width: 200px; height: 200px; }
+.enrol-manual { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.secret { font-family: var(--mono); font-size: 0.9375rem;
+  letter-spacing: 0.06em; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px; user-select: all;
+  /* Wrap between the four-character groups, never through one — a split group
+     is easy to mistype when copying by hand. */
+  word-break: keep-all; overflow-wrap: normal; }
+.codes { list-style: none; margin: 4px 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.codes code { display: block; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 0.875rem; letter-spacing: 0.05em;
+  text-align: center; user-select: all; }
+
 /* ---------- translations ---------- */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters .inp { width: auto; min-width: 150px; }
