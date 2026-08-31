@@ -1,48 +1,106 @@
 import { prisma } from "@fantazia/db";
-import { requirePermission } from "@/server/auth";
+import { MENU_ROUTES } from "@fantazia/db/content";
+import { requirePermission, can } from "@/server/auth";
 import { PageHeader } from "@/components/PageHeader";
-
-const LABELS: Record<string, string> = {
-  page: "Page",
-  resort: "Resort",
-  offer: "Offer",
-  experience: "Experience",
-  route: "System route",
-  url: "External link",
-};
+import { MenuBuilder, type MenuView, type Targets } from "./MenuBuilder";
 
 export default async function MenusPage() {
-  await requirePermission("menus:write");
+  const actor = await requirePermission("content:read");
+  const canWrite = can(actor, "menus:write");
 
-  const [menus, modules] = await Promise.all([
+  const [menus, locales, modules, pages, resorts, offers, experiences] = await Promise.all([
     prisma.menu.findMany({
       orderBy: { key: "asc" },
       include: {
         items: {
           orderBy: { position: "asc" },
-          include: {
-            page: { include: { translations: true } },
-            resort: { include: { translations: true } },
-            offer: { include: { translations: true } },
-            experience: { include: { translations: true } },
-            translations: true,
-          },
+          include: { translations: true },
         },
       },
     }),
+    prisma.locale.findMany({ where: { isEnabled: true }, orderBy: [{ isDefault: "desc" }, { code: "asc" }] }),
     prisma.siteModule.findMany(),
+    prisma.page.findMany({
+      orderBy: { key: "asc" },
+      select: { id: true, status: true, translations: { select: { localeCode: true, title: true } } },
+    }),
+    prisma.resort.findMany({
+      orderBy: { displayOrder: "asc" },
+      select: { id: true, status: true, translations: { select: { localeCode: true, name: true } } },
+    }),
+    prisma.offer.findMany({
+      orderBy: { displayOrder: "asc" },
+      select: { id: true, status: true, translations: { select: { localeCode: true, title: true } } },
+    }),
+    prisma.experience.findMany({
+      orderBy: { displayOrder: "asc" },
+      select: { id: true, status: true, translations: { select: { localeCode: true, name: true } } },
+    }),
   ]);
 
-  const moduleFor: Record<string, string> = {
-    "/resorts": "resorts",
-    "/offers": "offers",
-    "/experiences": "experiences",
-    "/diving": "reef",
-    "/weddings": "weddings",
-    "/destinations": "destinations",
+  const en = <T extends { localeCode: string }>(rows: T[]) =>
+    rows.find((r) => r.localeCode === "en") ?? rows[0];
+
+  const targets: Targets = {
+    page: pages.map((p) => ({
+      id: p.id,
+      name: en(p.translations)?.title ?? "Untitled page",
+      published: p.status === "published",
+    })),
+    resort: resorts.map((r) => ({
+      id: r.id,
+      name: en(r.translations)?.name ?? "Untitled resort",
+      published: r.status === "published",
+    })),
+    offer: offers.map((o) => ({
+      id: o.id,
+      name: en(o.translations)?.title ?? "Untitled offer",
+      published: o.status === "published",
+    })),
+    experience: experiences.map((e) => ({
+      id: e.id,
+      name: en(e.translations)?.name ?? "Untitled experience",
+      published: e.status === "published",
+    })),
+    // A route whose module is switched off is still offered, but marked. The
+    // menu is allowed to be ready before the section is turned on.
+    route: Object.entries(MENU_ROUTES).map(([path, def]) => ({
+      id: path,
+      name: def.label,
+      published: !def.module || (modules.find((m) => m.key === def.module)?.enabled ?? false),
+    })),
   };
-  const enabled = (key?: string) =>
-    !key || (modules.find((m) => m.key === key)?.enabled ?? false);
+
+  // Alphabetical by key would open on a footer menu. Order by how often a menu
+  // is actually edited instead: the main navigation first, footers last.
+  const MENU_ORDER = ["primary", "utility"];
+  const rank = (key: string) => {
+    const i = MENU_ORDER.indexOf(key);
+    return i === -1 ? MENU_ORDER.length : i;
+  };
+  const ordered = [...menus].sort(
+    (a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key),
+  );
+
+  const views: MenuView[] = ordered.map((menu) => ({
+    id: menu.id,
+    key: menu.key,
+    name: menu.name,
+    items: menu.items.map((i) => ({
+      id: i.id,
+      parentId: i.parentId,
+      position: i.position,
+      targetType: i.targetType,
+      pageId: i.pageId,
+      resortId: i.resortId,
+      offerId: i.offerId,
+      experienceId: i.experienceId,
+      route: i.route,
+      url: i.url,
+      openNewTab: i.openNewTab,
+      labels: i.translations.map((t) => ({ localeCode: t.localeCode, label: t.label })),
+    })),
+  }));
 
   return (
     <>
@@ -50,97 +108,17 @@ export default async function MenusPage() {
         title="Menus"
         description="Items point at content, not at addresses. Rename a resort or change its slug and every menu follows, in every language."
       />
-      <div className="cards">
-        {menus.map((menu) => (
-          <section className="card" key={menu.id}>
-            <h2>{menu.name}</h2>
-            <ul className="rows">
-              {menu.items
-                .filter((i) => !i.parentId)
-                .map((item) => {
-                  const kids = menu.items.filter((c) => c.parentId === item.id);
-                  return (
-                    <li key={item.id} className="menu-item">
-                      <MenuRow item={item} enabled={enabled} moduleFor={moduleFor} />
-                      {kids.length > 0 && (
-                        <ul className="rows nested">
-                          {kids.map((k) => (
-                            <li key={k.id}>
-                              <MenuRow item={k} enabled={enabled} moduleFor={moduleFor} />
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-            </ul>
-            {menu.items.length === 0 && <p className="note">Empty.</p>}
-          </section>
-        ))}
-      </div>
-      <p className="note">
-        An item whose target is unpublished, or whose section is switched off, is greyed here
-        and never rendered on the site — a menu item cannot become a broken link.
-      </p>
+      <MenuBuilder
+        menus={views}
+        locales={locales.map((l) => ({
+          code: l.code,
+          nativeName: l.nativeName,
+          direction: l.direction,
+          isDefault: l.isDefault,
+        }))}
+        targets={targets}
+        canWrite={canWrite}
+      />
     </>
-  );
-}
-
-type Item = {
-  id: string;
-  targetType: string;
-  route: string | null;
-  url: string | null;
-  page?: { status: string; translations: { localeCode: string; title: string }[] } | null;
-  resort?: { status: string; translations: { localeCode: string; name: string }[] } | null;
-  offer?: { status: string; translations: { localeCode: string; title: string }[] } | null;
-  experience?: { status: string; translations: { localeCode: string; name: string }[] } | null;
-  translations: { localeCode: string; label: string }[];
-};
-
-function MenuRow({
-  item,
-  enabled,
-  moduleFor,
-}: {
-  item: Item;
-  enabled: (key?: string) => boolean;
-  moduleFor: Record<string, string>;
-}) {
-  const en = <T extends { localeCode: string }>(rows: T[]) =>
-    rows.find((r) => r.localeCode === "en") ?? rows[0];
-
-  let label = en(item.translations)?.label ?? null;
-  let reason: string | null = null;
-
-  if (item.targetType === "page") {
-    label ??= en(item.page?.translations ?? [])?.title ?? null;
-    if (item.page && item.page.status !== "published") reason = "Page is not published";
-  } else if (item.targetType === "resort") {
-    label ??= en(item.resort?.translations ?? [])?.name ?? null;
-    if (item.resort && item.resort.status !== "published") reason = "Resort is not published";
-  } else if (item.targetType === "offer") {
-    label ??= en(item.offer?.translations ?? [])?.title ?? null;
-    if (item.offer && item.offer.status !== "published") reason = "Offer is not published";
-  } else if (item.targetType === "experience") {
-    label ??= en(item.experience?.translations ?? [])?.name ?? null;
-    if (item.experience && item.experience.status !== "published")
-      reason = "Experience is not published";
-  } else if (item.targetType === "route") {
-    label ??= item.route;
-    if (item.route && !enabled(moduleFor[item.route])) reason = "Section is switched off";
-  } else if (item.targetType === "url") {
-    label ??= item.url;
-  }
-
-  return (
-    <span className={`menu-row${reason ? " off" : ""}`}>
-      <span>
-        <b>{label ?? "Untitled"}</b>
-        <code>{LABELS[item.targetType] ?? item.targetType}</code>
-      </span>
-      {reason ? <span className="chip chip--warn">{reason}</span> : null}
-    </span>
   );
 }

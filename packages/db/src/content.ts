@@ -447,6 +447,43 @@ export async function getPageBySlug(locale: string, slug: string) {
  * An item whose target is unpublished, or whose module is switched off, is
  * dropped here — which is why a menu item can never render as a broken link.
  */
+/**
+ * The system routes a menu item may point at.
+ *
+ * This is the single source of truth for both sides: the renderer below
+ * resolves against it, and the admin's menu builder offers exactly these. They
+ * must not drift — a route the admin allows but the renderer does not know
+ * produces an item that silently disappears from the site, which is the worst
+ * kind of bug to diagnose because nothing anywhere reports an error.
+ *
+ * `module` names the SiteModule switch that governs the route. When that switch
+ * is off the item is not rendered, so a menu can never link into a section that
+ * has been turned off.
+ */
+export const MENU_ROUTES: Record<string, { label: string; module?: string }> = {
+  "/": { label: "Home" },
+  "/resorts": { label: "Our Resorts", module: "resorts" },
+  "/offers": { label: "Offers", module: "offers" },
+  "/experiences": { label: "Experiences", module: "experiences" },
+  "/diving": { label: "The Reef", module: "reef" },
+  "/weddings": { label: "Weddings", module: "weddings" },
+  "/destinations": { label: "Destinations", module: "destinations" },
+  "/my-booking": { label: "My Booking" },
+  "/contact": { label: "Contact" },
+};
+
+/**
+ * How deep the renderer actually goes. `resolve` builds the child map from
+ * top-level items only, so a grandchild has no parent to attach to and is
+ * dropped. The builder enforces the same number rather than trusting
+ * `Menu.maxDepth`, so the two can never disagree.
+ */
+export const MENU_MAX_DEPTH = 2;
+
+/** The target kinds the renderer can resolve. Anything else resolves to null. */
+export const MENU_TARGET_TYPES = ["page", "resort", "offer", "experience", "route", "url"] as const;
+export type MenuTargetType = (typeof MENU_TARGET_TYPES)[number];
+
 export async function getMenu(locale: string, key: string) {
   const menu = await prisma.menu.findUnique({
     where: { key },
@@ -466,18 +503,6 @@ export async function getMenu(locale: string, key: string) {
   if (!menu) return [];
 
   const modules = await getModules();
-
-  const ROUTE_LABELS: Record<string, { label: string; module?: string }> = {
-    "/": { label: "Home" },
-    "/resorts": { label: "Our Resorts", module: "resorts" },
-    "/offers": { label: "Offers", module: "offers" },
-    "/experiences": { label: "Experiences", module: "experiences" },
-    "/diving": { label: "The Reef", module: "reef" },
-    "/weddings": { label: "Weddings", module: "weddings" },
-    "/destinations": { label: "Destinations", module: "destinations" },
-    "/my-booking": { label: "My Booking" },
-    "/contact": { label: "Contact" },
-  };
 
   type Resolved = { id: string; label: string; href: string; newTab: boolean; children: Resolved[] };
 
@@ -512,7 +537,7 @@ export async function getMenu(locale: string, key: string) {
         break;
       }
       case "route": {
-        const def = item.route ? ROUTE_LABELS[item.route] : undefined;
+        const def = item.route ? MENU_ROUTES[item.route] : undefined;
         if (!def) return null;
         if (def.module && !modules.enabled(def.module)) return null; // module switched off
         label ??= def.label;

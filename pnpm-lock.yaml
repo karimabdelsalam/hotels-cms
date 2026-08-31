@@ -104,6 +104,9 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.2.0
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
       prisma:
         specifier: ^6.3.1
         version: 6.19.3(typescript@5.9.3)

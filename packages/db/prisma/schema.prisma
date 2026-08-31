@@ -561,6 +561,11 @@ model MenuItem {
   anchor       String?
 
   openNewTab Boolean @default(false)
+
+  /// Not read by anything yet — neither `getMenu` nor the admin builder looks at
+  /// these. Left in place for signed-in-only items and in-page anchors, but the
+  /// builder deliberately does not offer controls for them: a switch that does
+  /// nothing is worse than no switch at all.
   visibility String  @default("always")
 
   menu         Menu                  @relation(fields: [menuId], references: [id], onDelete: Cascade)

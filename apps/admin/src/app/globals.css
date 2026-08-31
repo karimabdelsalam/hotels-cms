@@ -147,6 +147,15 @@ textarea.inp { resize: vertical; }
 .menu-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
 .menu-row > span:first-child { display: flex; flex-direction: column; gap: 1px; }
 .menu-row.off b { color: var(--ink-3); }
+.menu-row.off code { color: var(--ink-4); }
+.menu-row > span:first-child code { align-self: flex-start; }
+/* The inline editor for one menu item. Indented and tinted so it reads as
+   belonging to the row above it rather than as the next row. */
+.menu-edit { margin: 8px 0 10px; padding: 14px; border-radius: 12px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 12px; }
+.menu-edit .grid { gap: 12px; }
+.menu-item .rows.nested .menu-edit { background: var(--panel); }
 
 .list { display: flex; flex-direction: column; gap: 1px; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 20px;
