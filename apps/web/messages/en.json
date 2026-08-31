@@ -62,5 +62,33 @@
     "support": "Support",
     "blurb": "Three resorts on one stretch of Red Sea coast. Reservations answered by people, 8am to midnight.",
     "rights": "Fantazia Hotels & Resorts · Marsa Alam, Red Sea"
+  },
+  "offer": {
+    "terms": "Terms",
+    "code": "Promo code",
+    "appliesAt": "Applies at"
+  },
+  "diving": {
+    "title": "One reef, three ways in",
+    "body1": "The dive centre at Sirena runs every day of the year, and the jetty reaches past the shallows so the first dive needs no boat. Guests at all three resorts use it on the same terms.",
+    "body2": "Fourteen sites are within an hour by boat, and the house reef is open to snorkellers from first light without a guide.",
+    "whereToStay": "Where to stay",
+    "view": "View resort"
+  },
+  "enquiry": {
+    "name": "Your name",
+    "email": "Email",
+    "date": "Preferred date",
+    "guests": "Guests",
+    "whichResorts": "Which resorts should reply?",
+    "message": "Tell us about the occasion",
+    "submit": "Send request",
+    "received": "Request received — every resort you selected will reply.",
+    "goesTo": "Goes to {count} of our resorts, in one request."
+  },
+  "notFound": {
+    "title": "This page has moved on",
+    "body": "The link may be out of date, or the page may have been unpublished. The resorts are all still here.",
+    "home": "Back to the coast"
   }
 }

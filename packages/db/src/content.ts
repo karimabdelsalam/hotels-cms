@@ -145,6 +145,191 @@ export async function getExperiences(locale: string) {
   }));
 }
 
+export async function getExperienceBySlug(locale: string, slug: string) {
+  const match = await prisma.experienceTranslation.findFirst({
+    where: { slug },
+    select: { experienceId: true },
+  });
+  if (!match) return null;
+
+  const x = await prisma.experience.findUnique({
+    where: { id: match.experienceId },
+    include: { translations: true },
+  });
+  if (!x || x.status !== "published") return null;
+
+  return {
+    id: x.id,
+    code: x.code,
+    category: x.category,
+    durationHours: x.durationHours,
+    priceMinor: x.priceMinor,
+    slug: field(x.translations, locale, "slug") ?? slug,
+    name: field(x.translations, locale, "name") ?? x.code,
+    summary: field(x.translations, locale, "summary"),
+    description: field(x.translations, locale, "description"),
+  };
+}
+
+export async function getOfferBySlug(locale: string, slug: string) {
+  const match = await prisma.offerTranslation.findFirst({
+    where: { slug },
+    select: { offerId: true },
+  });
+  if (!match) return null;
+
+  const o = await prisma.offer.findUnique({
+    where: { id: match.offerId },
+    include: { translations: true },
+  });
+  if (!o || o.status !== "published") return null;
+
+  return {
+    id: o.id,
+    resortId: o.resortId,
+    promoCode: o.promoCode,
+    slug: field(o.translations, locale, "slug") ?? slug,
+    title: field(o.translations, locale, "title") ?? "",
+    summary: field(o.translations, locale, "summary"),
+    description: field(o.translations, locale, "description"),
+    terms: field(o.translations, locale, "terms"),
+    validityLabel: field(o.translations, locale, "validityLabel"),
+  };
+}
+
+/**
+ * Every locale's slug for one entity, so hreflang and the language switcher
+ * point at the same page in the other language rather than at the English
+ * slug — the detail most multilingual sites get wrong.
+ */
+export async function getEntitySlugs(
+  kind: "resort" | "experience" | "offer" | "page",
+  id: string,
+): Promise<Record<string, string>> {
+  const rows =
+    kind === "resort"
+      ? await prisma.resortTranslation.findMany({
+          where: { resortId: id },
+          select: { localeCode: true, slug: true },
+        })
+      : kind === "experience"
+        ? await prisma.experienceTranslation.findMany({
+            where: { experienceId: id },
+            select: { localeCode: true, slug: true },
+          })
+        : kind === "offer"
+          ? await prisma.offerTranslation.findMany({
+              where: { offerId: id },
+              select: { localeCode: true, slug: true },
+            })
+          : await prisma.pageTranslation.findMany({
+              where: { pageId: id },
+              select: { localeCode: true, slug: true },
+            });
+
+  return Object.fromEntries(rows.map((r) => [r.localeCode, r.slug]));
+}
+
+/**
+ * Everything indexable, as one entry per page with the path it has in EVERY
+ * locale. Built this way so hreflang alternates point at the other language's
+ * slug rather than reusing this one.
+ *
+ * Unpublished content, and anything belonging to a switched-off module, is
+ * excluded — nothing lingers as an orphan that search engines keep serving.
+ */
+export async function getSitemapEntries(
+  locales: string[],
+): Promise<{ paths: Record<string, string>; updatedAt: Date }[]> {
+  const modules = await getModules();
+  const now = new Date();
+
+  /** The same path in every locale — index and static routes. */
+  const shared = (path: string, updatedAt = now) => ({
+    paths: Object.fromEntries(locales.map((l) => [l, path])),
+    updatedAt,
+  });
+
+  /** A translated slug per locale, falling back to the default locale's. */
+  const translated = <T extends { localeCode: string; slug: string }>(
+    rows: T[],
+    prefix: string,
+    updatedAt: Date,
+  ) => {
+    const fallback = rows.find((r) => r.localeCode === DEFAULT_LOCALE)?.slug ?? rows[0]?.slug;
+    if (!fallback) return null;
+    return {
+      paths: Object.fromEntries(
+        locales.map((l) => [l, `${prefix}/${rows.find((r) => r.localeCode === l)?.slug ?? fallback}`]),
+      ),
+      updatedAt,
+    };
+  };
+
+  const out: { paths: Record<string, string>; updatedAt: Date }[] = [shared("")];
+
+  if (modules.enabled("resorts")) {
+    out.push(shared("resorts"));
+    const rows = await prisma.resort.findMany({
+      where: { status: "published" },
+      include: { translations: { select: { localeCode: true, slug: true } } },
+    });
+    for (const r of rows) {
+      const e = translated(r.translations, "resorts", r.updatedAt);
+      if (e) out.push(e);
+    }
+  }
+
+  if (modules.enabled("experiences")) {
+    out.push(shared("experiences"));
+    const rows = await prisma.experience.findMany({
+      where: { status: "published" },
+      include: { translations: { select: { localeCode: true, slug: true } } },
+    });
+    for (const x of rows) {
+      const e = translated(x.translations, "experiences", x.updatedAt);
+      if (e) out.push(e);
+    }
+  }
+
+  if (modules.enabled("offers")) {
+    out.push(shared("offers"));
+    const rows = await prisma.offer.findMany({
+      where: { status: "published" },
+      include: { translations: { select: { localeCode: true, slug: true } } },
+    });
+    for (const o of rows) {
+      const e = translated(o.translations, "offers", o.updatedAt);
+      if (e) out.push(e);
+    }
+  }
+
+  if (modules.enabled("reef")) out.push(shared("diving"));
+  if (modules.enabled("weddings")) out.push(shared("weddings"));
+
+  const pages = await prisma.page.findMany({
+    where: { status: "published" },
+    include: { translations: { select: { localeCode: true, slug: true } } },
+  });
+  for (const pg of pages) {
+    const fallback =
+      pg.translations.find((r) => r.localeCode === DEFAULT_LOCALE)?.slug ??
+      pg.translations[0]?.slug;
+    if (!fallback) continue;
+    out.push({
+      paths: Object.fromEntries(
+        locales.map((l) => [
+          l,
+          pg.translations.find((r) => r.localeCode === l)?.slug ?? fallback,
+        ]),
+      ),
+      updatedAt: pg.updatedAt,
+    });
+  }
+
+  return out;
+}
+
 export async function getOffers(locale: string) {
   const rows = await prisma.offer.findMany({
     where: { status: "published" },

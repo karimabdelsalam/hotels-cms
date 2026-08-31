@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getResortBySlug, formatMoney } from "@fantazia/db/content";
+import { getResortBySlug, getEntitySlugs, formatMoney } from "@fantazia/db/content";
+import { alternatesFor, resortJsonLd } from "@/lib/seo";
 import { Reveal } from "@/components/Reveal";
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
@@ -14,6 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: resort.metaTitle ?? `${resort.name} — Marsa Alam`,
     description: resort.metaDescription ?? resort.shortDescription ?? undefined,
+    alternates: await alternatesFor(locale, await getEntitySlugs("resort", resort.id), "resorts"),
   };
 }
 
@@ -27,8 +29,23 @@ export default async function ResortPage({ params }: Props) {
   const t = await getTranslations("resort");
   const price = formatMoney(resort.fromRateMinor, resort.currency, locale);
 
+  const jsonLd = resortJsonLd({
+    name: resort.name,
+    description: resort.shortDescription,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${locale}/resorts/${resort.slug}`,
+    starRating: resort.stars,
+    latitude: resort.latitude,
+    longitude: resort.longitude,
+    city: resort.destination,
+    priceCurrency: resort.currency,
+  });
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="resort-hero">
         <div className="fill f-1" />
         <div className="wrap resort-hero-inner">

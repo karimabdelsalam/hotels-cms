@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getResorts } from "@fantazia/db/content";
 import { ResortCard } from "@/components/ResortCard";
+import { alternatesFor } from "@/lib/seo";
 import { Reveal } from "@/components/Reveal";
 
 export async function generateMetadata({
@@ -11,7 +12,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
-  return { title: `${t("resortsTitle")} — Fantazia`, description: t("lede") };
+  return {
+    title: `${t("resortsTitle")} — Fantazia`,
+    description: t("lede"),
+    alternates: await alternatesFor(locale, "resorts"),
+  };
 }
 
 export default async function ResortsPage({ params }: { params: Promise<{ locale: string }> }) {

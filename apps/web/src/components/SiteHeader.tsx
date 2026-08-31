@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 type Item = { id: string; label: string; href: string; newTab: boolean; children: Item[] };
 type Locale = { code: string; nativeName: string };
@@ -58,19 +59,7 @@ export function SiteHeader({
           </ul>
 
           <div className="nav-right">
-            <div className="lang">
-              {locales.map((l) => (
-                <Link
-                  key={l.code}
-                  href={`/${l.code}`}
-                  className={l.code === locale ? "on" : ""}
-                  lang={l.code}
-                  hrefLang={l.code}
-                >
-                  {l.code.toUpperCase()}
-                </Link>
-              ))}
-            </div>
+            <LocaleSwitcher locale={locale} locales={locales} />
             {utility.map((item) => (
               <Link key={item.id} href={item.href} className="util-link">
                 {item.label}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getResorts, getExperiences, getOffers, getModules } from "@fantazia/db/content";
+import { alternatesFor } from "@/lib/seo";
 import { Hero } from "@/components/Hero";
 import { Reveal } from "@/components/Reveal";
 import { ResortCard } from "@/components/ResortCard";
@@ -16,6 +17,7 @@ export async function generateMetadata({
   return {
     title: "Fantazia Hotels & Resorts — Marsa Alam, Red Sea",
     description: t("lede"),
+    alternates: await alternatesFor(locale),
   };
 }
 
