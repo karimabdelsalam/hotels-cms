@@ -131,12 +131,14 @@ launch in delegated mode without waiting.
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| OPERA environment answers drag | Delays Phase 4 only | Mock connector unblocks everything else; delegated mode remains a working launch path |
-| OWS not licensed | Checkout loses instant confirmation and falls back to async OXI reservation creation | Price the licence early. If refused, capability flags carry async confirmation through the UI, with allotment buffers against oversell |
+| OPERA environment answers drag | Delays the integration only | The simulator connector already carries the whole build, failure branches included |
+| ~~OWS not licensed~~ | ~~Checkout loses instant confirmation~~ | **Closed.** OWS is licensed and running. Instant confirmation holds |
+| OWS message shapes differ from our assumptions | A wrong namespace returns a fault, not an error: bookings fail and nothing says why | Namespaces and SOAP actions are configuration read from the environment, not constants. Filled from the WSDL the property exports; nothing ships assuming a shape we have not seen |
+| No payment provider chosen | Nothing can be charged | The lifecycle, webhook, signature check and idempotency are built and tested behind a `PaymentProvider` seam. Choosing one is an adapter, not a rewrite — but it is paperwork with a lead time, so start it now |
 | Two systems writing the same inventory | A direct booking and an OTA booking take the last room | OPERA stays the single source of truth; measure propagation latency to the channel manager rather than assuming it, and size the allotment buffer to it |
-| SOAP integration underestimated | Phase 4 overruns | Phase 4 carries 5–6 weeks rather than 3; schema mapping and certification against the real configuration are in scope, not follow-on work |
+| SOAP integration underestimated | The integration overruns | The envelope, WS-Security, fault handling and redaction are written and unit-tested; what remains is mapping against the real configuration and certifying it, which is in scope rather than follow-on work |
 | **One shared OPERA behind all three hotels** | A single outage takes the whole group offline, where three installations would have isolated it | ARI is pushed and stored, so search and browsing survive an outage; only reservation creation queues. This is why `InventorySnapshot` is not optional |
-| OPERA confirmation number never arrives over OXI | Guest holds a confirmed booking the hotel cannot see | Reconciliation job flags any booking missing its PMS number past a threshold, as an admin queue |
+| A reservation succeeds while the response is lost | Two reservations for one guest, discovered at check-in | Every retry looks the reservation up by our own reference before creating, and adopts an existing one. Tested against a simulator failure mode built for exactly this |
 | ARI sync latency causes oversell | Guest-facing failure and a refund | Allotment buffer, stop-sell threshold, and a mandatory live `quote()` before payment |
 | A locale's content lags English at launch | Half-translated site that looks broken and gets indexed as a mixture | The publish gate blocks enabling a locale until UI strings and published content are complete; machine pre-fill plus agency import keeps the review effort tractable across seven languages |
 | Translation cost scales with seven locales | Budget overrun, or locales that never launch | Locales are enabled one at a time on their own schedule; English ships alone if needed, and each additional language is an independent decision with no engineering cost |
