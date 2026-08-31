@@ -1,9 +1,12 @@
 /**
  * PM2 process definitions.
  *
- * Both apps run as the unprivileged `fantazia` user and bind to localhost only —
- * Apache is the single thing listening on 80 and 443. Nothing here should ever
- * be reachable directly from the internet.
+ * Both apps run as the cPanel account user and bind to localhost only — Apache
+ * is the single thing listening on 80 and 443. Nothing here should ever be
+ * reachable directly from the internet.
+ *
+ * Run from the app directory, which sits OUTSIDE public_html: everything under
+ * the document root is downloadable, and this repository holds .env.
  *
  *   pm2 start infra/ecosystem.config.cjs
  *   pm2 save && pm2 startup      # survive a reboot

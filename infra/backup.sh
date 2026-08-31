@@ -10,7 +10,7 @@
 set -euo pipefail
 
 BACKUP_DIR="${BACKUP_DIR:-/home/fantazia/backups}"
-MEDIA_DIR="${MEDIA_DIR:-/home/fantazia/media}"
+MEDIA_DIR="${MEDIA_DIR:-/home/fantazia/public_html/media}"
 DB_NAME="${DB_NAME:-fantazia}"
 DB_USER="${DB_USER:-fantazia}"
 KEEP_DAYS="${KEEP_DAYS:-30}"
