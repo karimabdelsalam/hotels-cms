@@ -122,6 +122,14 @@ model MediaAsset {
   originalName String?
   focalX     Float   @default(0.5) // every card crops the same image differently;
   focalY     Float   @default(0.5) // a face cropped out of frame is how a hotel site looks cheap
+
+  /// Generated filler, not photography.
+  ///
+  /// Demo content has a habit of surviving into production, and a hotel group
+  /// launching on abstract gradients is a bad day. Flagged in the library, and
+  /// countable — so "how many placeholders are still live" is a question with
+  /// an answer rather than a hunt.
+  isPlaceholder Boolean @default(false)
   uploadedById String?
   createdAt  DateTime @default(now())
 

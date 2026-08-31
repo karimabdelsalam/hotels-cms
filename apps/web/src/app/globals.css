@@ -96,6 +96,12 @@ button { font-family: inherit; }
 .tag { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-3); }
 .tag--sea { color: var(--sea); }
 .tag--surf { color: var(--surf); }
+/* Over a hero the accent teal is not safe: the hero's own scrim thins to 2%
+   right where the eyebrow sits, and the image behind it is whatever an editor
+   uploads. The headline survives because it is near-white; the eyebrow needs
+   the same. The accent still carries in the italic half of the headline, which
+   is large enough to hold its own. */
+.hero .tag--surf, .page-hero .tag--surf, .resort-hero .tag--surf { color: var(--on-deep); }
 /* Arabic has no letter case and no tracking — the eyebrow degrades to plain small text. */
 [lang="ar"] .tag { text-transform: none; letter-spacing: normal; font-size: 0.8125rem; }
 
@@ -146,9 +152,40 @@ button { font-family: inherit; }
 /* ---------- nav ---------- */
 .nav {
   position: fixed; inset-block-start: 0; inset-inline: 0; z-index: 150;
-  padding-block: 20px; border-bottom: 1px solid transparent; color: var(--on-deep);
+  padding-block: 20px; border-bottom: 1px solid transparent;
+  /* Dark by default. The header floats over whatever the page starts with, and
+     a page with no dark hero behind it was rendering near-white links on the
+     cream ground — measured at 1.03:1, which is invisible rather than merely
+     low. Light text is now opt-in, so a page that has no hero is legible and a
+     new page cannot regress by forgetting to declare anything. */
+  color: var(--ink);
   transition: background 0.45s var(--ease), backdrop-filter 0.45s var(--ease),
     border-color 0.45s var(--ease), padding 0.45s var(--ease), color 0.45s var(--ease);
+}
+/* Light where a hero sits behind it, and only before the header takes its own
+   background on scroll. Every hero on the site is listed: a page whose hero is
+   not here gets the readable default rather than silently inheriting the wrong
+   one. */
+body:has(.hero) .nav:not(.stuck),
+body:has(.page-hero) .nav:not(.stuck),
+body:has(.resort-hero) .nav:not(.stuck) { color: var(--on-deep); }
+
+/* A scrim under the light state.
+   Light text over a hero was measuring 2.3–2.9:1 — legible against a dark
+   photograph, not against a bright one, and the hero is whatever an editor
+   uploads. The gradient guarantees the contrast without darkening the image
+   itself: it fades out over the header's own height and is invisible in use. */
+body:has(.hero) .nav:not(.stuck)::before,
+body:has(.page-hero) .nav:not(.stuck)::before,
+body:has(.resort-hero) .nav:not(.stuck)::before {
+  content: ""; position: absolute; inset-inline: 0; inset-block-start: 0;
+  height: 190%; pointer-events: none; z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgba(3, 32, 46, 0.64) 0%,
+    rgba(3, 32, 46, 0.40) 45%,
+    rgba(3, 32, 46, 0) 100%
+  );
 }
 .nav.stuck {
   background: rgba(251, 250, 246, 0.86);
@@ -203,7 +240,12 @@ button { font-family: inherit; }
   position: relative; z-index: 2; padding-block: 0 clamp(34px, 5vw, 58px);
   display: flex; flex-direction: column; gap: clamp(30px, 4.4vw, 52px);
 }
-.hero-copy { display: flex; flex-direction: column; gap: clamp(16px, 2.2vw, 26px); max-width: 19ch; }
+.hero-copy { display: flex; flex-direction: column; gap: clamp(16px, 2.2vw, 26px); }
+/* The measure belongs on the heading, not its container. `ch` resolves against
+   the element's own font, so 19ch on the flex parent meant 19 characters of
+   BODY text — about 190px — and the display headline inside was breaking one
+   word per line. On the heading it means what it was always meant to mean. */
+.hero-copy .d1 { max-width: 19ch; }
 .hero-copy .d1 em { font-style: italic; color: var(--surf); }
 .on-deep-lede { color: var(--on-deep-2); max-width: 45ch; }
 

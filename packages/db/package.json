@@ -20,15 +20,18 @@
     "migrate:deploy": "prisma migrate deploy",
     "migrate:status": "prisma migrate status",
     "sync:strings": "tsx sync.ts",
-    "seed:booking": "tsx seed-booking.ts"
+    "seed:booking": "tsx seed-booking.ts",
+    "seed:demo": "tsx seed-demo.ts"
   },
   "dependencies": {
+    "@fantazia/media": "workspace:*",
     "@prisma/client": "^6.3.1"
   },
   "devDependencies": {
     "@node-rs/argon2": "^2.0.2",
     "@types/node": "^22.20.1",
     "prisma": "^6.3.1",
+    "sharp": "^0.33.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
