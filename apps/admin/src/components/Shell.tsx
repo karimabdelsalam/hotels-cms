@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+type BrandView = { wordmark: string };
+
 type ActorView = {
   name: string;
   email: string;
@@ -23,10 +25,19 @@ const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/modules", label: "Site sections", permission: "modules:write" },
   { href: "/menus", label: "Menus", permission: "menus:write" },
   { href: "/users", label: "Staff", permission: "users:manage" },
+  { href: "/settings", label: "Settings", permission: "content:read" },
   { href: "/audit", label: "Audit log", permission: "audit:read" },
 ];
 
-export function Shell({ actor, children }: { actor: ActorView; children: ReactNode }) {
+export function Shell({
+  actor,
+  brand,
+  children,
+}: {
+  actor: ActorView;
+  brand: BrandView;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const allowed = NAV.filter((n) => !n.permission || actor.permissions.includes(n.permission));
 
@@ -34,7 +45,7 @@ export function Shell({ actor, children }: { actor: ActorView; children: ReactNo
     <div className="shell">
       <aside className="side">
         <Link href="/" className="side-brand">
-          <b>FANTAZIA</b>
+          <b>{brand.wordmark}</b>
           <span>Admin</span>
         </Link>
         <nav className="side-nav" aria-label="Sections">

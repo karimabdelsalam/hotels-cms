@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getResortBySlug, getEntitySlugs, formatMoney } from "@fantazia/db/content";
+import { getResortBySlug, getEntitySlugs, formatMoney, getBrand } from "@fantazia/db/content";
 import { alternatesFor, resortJsonLd } from "@/lib/seo";
 import { Media } from "@/components/Media";
 import { Reveal } from "@/components/Reveal";
@@ -20,8 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const resort = await getResortBySlug(locale, slug);
   if (!resort) return {};
+  const brand = await getBrand(locale);
   return {
-    title: resort.metaTitle ?? `${resort.name} — Marsa Alam`,
+    title: resort.metaTitle ?? `${resort.name} — ${brand.name}`,
     description: resort.metaDescription ?? resort.shortDescription ?? undefined,
     alternates: await alternatesFor(locale, await getEntitySlugs("resort", resort.id), "resorts"),
   };

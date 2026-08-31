@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { getPageBySlug, getEntitySlugs } from "@fantazia/db/content";
+import { getPageBySlug, getEntitySlugs, getBrand } from "@fantazia/db/content";
 import { alternatesFor } from "@/lib/seo";
 import { Blocks, type Block } from "@/components/Blocks";
 import { PageHero } from "@/components/PageHero";
@@ -23,8 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const page = await getPageBySlug(locale, slug);
   if (!page) return {};
+  const brand = await getBrand(locale);
   return {
-    title: page.metaTitle ?? `${page.title} — Fantazia Marsa Alam`,
+    title: page.metaTitle ?? `${page.title} — ${brand.name}`,
     description: page.metaDescription ?? undefined,
     alternates: await alternatesFor(locale, await getEntitySlugs("page", page.id)),
   };

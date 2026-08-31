@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getOfferBySlug, getResorts, getEntitySlugs } from "@fantazia/db/content";
+import { getOfferBySlug, getResorts, getEntitySlugs, getBrand } from "@fantazia/db/content";
 import { alternatesFor } from "@/lib/seo";
 import { Reveal } from "@/components/Reveal";
 import { PageHero } from "@/components/PageHero";
@@ -20,8 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const o = await getOfferBySlug(locale, slug);
   if (!o) return {};
+  const brand = await getBrand(locale);
   return {
-    title: `${o.title} — Fantazia Marsa Alam`,
+    title: `${o.title} — ${brand.name}`,
     description: o.summary ?? undefined,
     alternates: await alternatesFor(locale, await getEntitySlugs("offer", o.id), "offers"),
   };

@@ -7,17 +7,20 @@ import { LocaleSwitcher } from "./LocaleSwitcher";
 
 type Item = { id: string; label: string; href: string; newTab: boolean; children: Item[] };
 type Locale = { code: string; nativeName: string };
+type Brand = { name: string; wordmark: string; location: string };
 
 export function SiteHeader({
   locale,
   primary,
   utility,
   locales,
+  brand,
 }: {
   locale: string;
   primary: Item[];
   utility: Item[];
   locales: Locale[];
+  brand: Brand;
 }) {
   const t = useTranslations("nav");
   const [stuck, setStuck] = useState(false);
@@ -36,9 +39,9 @@ export function SiteHeader({
       </a>
       <nav className={`nav${stuck ? " stuck" : ""}`} aria-label="Primary">
         <div className="wrap nav-inner">
-          <Link href={`/${locale}`} className="mark" aria-label="Fantazia Hotels & Resorts, home">
-            <b>FANTAZIA</b>
-            <span>Marsa Alam</span>
+          <Link href={`/${locale}`} className="mark" aria-label={`${brand.name}, home`}>
+            <b>{brand.wordmark}</b>
+            <span>{brand.location}</span>
           </Link>
 
           <ul className="nav-links">

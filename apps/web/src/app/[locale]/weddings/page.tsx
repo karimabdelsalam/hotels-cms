@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getResorts } from "@fantazia/db/content";
+import { getResorts, getBrand } from "@fantazia/db/content";
 import { Reveal } from "@/components/Reveal";
 import { PageHero } from "@/components/PageHero";
 import { EnquiryForm } from "@/components/EnquiryForm";
@@ -19,7 +19,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
-  return { title: `${t("weddingsTitle")} — Fantazia`, description: t("weddingsBody") };
+  const brand = await getBrand(locale);
+  return { title: `${t("weddingsTitle")} — ${brand.name}`, description: t("weddingsBody") };
 }
 
 export default async function WeddingsPage({ params }: { params: Promise<{ locale: string }> }) {

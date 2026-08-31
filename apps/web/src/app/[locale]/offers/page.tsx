@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getOffers } from "@fantazia/db/content";
+import { getOffers, getBrand } from "@fantazia/db/content";
 import { Reveal } from "@/components/Reveal";
 import { PageHero } from "@/components/PageHero";
 
@@ -19,7 +19,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
-  return { title: `${t("offersTitle")} — Fantazia`, description: t("offersEyebrow") };
+  const brand = await getBrand(locale);
+  return { title: `${t("offersTitle")} — ${brand.name}`, description: t("offersEyebrow") };
 }
 
 export default async function OffersPage({ params }: { params: Promise<{ locale: string }> }) {

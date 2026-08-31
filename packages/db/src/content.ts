@@ -29,6 +29,55 @@ export function field<T extends Trans>(rows: T[], locale: string, key: keyof T):
   return typeof fallback === "string" && fallback.trim() ? fallback : null;
 }
 
+export type Brand = {
+  /** Full legal-ish name, used in titles and the footer. */
+  name: string;
+  /** The wordmark, set in the display face. Usually the name in capitals. */
+  wordmark: string;
+  /** Where the group is, translated. */
+  location: string;
+  tagline: string | null;
+};
+
+const BRAND_FALLBACK: Brand = {
+  name: "Fantazia Hotels",
+  wordmark: "FANTAZIA",
+  location: "Marsa Alam",
+  tagline: null,
+};
+
+/**
+ * The group's own name is content, not a constant. It appears in the header,
+ * the footer, every page title and every email, so it lives in one row and is
+ * edited in admin rather than being found and replaced across the codebase.
+ */
+export async function getBrand(locale: string): Promise<Brand> {
+  const rows = await prisma.setting.findMany({
+    where: { key: { in: ["brand.name", "brand.wordmark", "brand.location", "brand.tagline"] } },
+  });
+
+  const read = (key: string): string | null => {
+    const value = rows.find((r) => r.key === key)?.value;
+    if (typeof value === "string") return value.trim() || null;
+    // A per-locale object, for the fields that are translated.
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const map = value as Record<string, unknown>;
+      const local = map[locale];
+      if (typeof local === "string" && local.trim()) return local;
+      const fallback = map[DEFAULT_LOCALE];
+      if (typeof fallback === "string" && fallback.trim()) return fallback;
+    }
+    return null;
+  };
+
+  return {
+    name: read("brand.name") ?? BRAND_FALLBACK.name,
+    wordmark: read("brand.wordmark") ?? BRAND_FALLBACK.wordmark,
+    location: read("brand.location") ?? BRAND_FALLBACK.location,
+    tagline: read("brand.tagline"),
+  };
+}
+
 export async function getEnabledLocales() {
   return prisma.locale.findMany({
     where: { isEnabled: true },

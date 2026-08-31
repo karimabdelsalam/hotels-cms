@@ -1,5 +1,5 @@
 /**
- * Seed — Fantazia Hotels & Resorts, Marsa Alam.
+ * Seed — Fantazia Hotels, Marsa Alam.
  *
  * Three real resorts, one destination. Everything here is a database row, so
  * names, copy, rates, and structure are all editable from admin later.
@@ -47,6 +47,23 @@ async function main() {
         code: l[0]!, name: l[1]!, nativeName: l[2]!, direction: "ltr",
         script: l[3]!, isEnabled: false, fallbackCode: EN, displayOrder: 2 + i,
       },
+    });
+  }
+
+  // ---------- brand ----------
+  // The group's name is a row, not a constant: it appears in the header, the
+  // footer, every page title and every email.
+  const brand: [string, unknown][] = [
+    ["brand.name", "Fantazia Hotels"],
+    ["brand.wordmark", "FANTAZIA"],
+    ["brand.location", { en: "Marsa Alam", ar: "مرسى علم" }],
+    ["brand.tagline", { en: "Three resorts on one stretch of Red Sea coast.", ar: "ثلاثة منتجعات على امتداد واحد من ساحل البحر الأحمر." }],
+  ];
+  for (const [key, value] of brand) {
+    await db.setting.upsert({
+      where: { key },
+      update: {},
+      create: { key, value: value as never },
     });
   }
 
@@ -480,6 +497,7 @@ async function main() {
   console.log(`  pages        ${await db.page.count()}`);
   console.log(`  menu items   ${await db.menuItem.count()}`);
   console.log(`  modules      ${await db.siteModule.count()} (destinations off)`);
+  console.log(`  settings     ${await db.setting.count()}`);
   console.log(`  roles        ${await db.role.count()}`);
   console.log(`  users        ${await db.user.count()}`);
   console.log("");

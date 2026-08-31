@@ -2,9 +2,9 @@
 
 One group website + one central multi-property booking experience + one OPERA behind it.
 
-This repository is the corporate website, CMS, and central booking platform for a resort
-group on the Red Sea coast at **Marsa Alam** — Fantazia Resort, Fantazia Royal, and Sirena
-Resort. It is a **multi-property platform from day one**: adding a fourth resort, in this
+This repository is the corporate website, CMS, and central booking platform for
+**Fantazia Hotels**, a resort group on the Red Sea coast at **Marsa Alam** — Fantazia
+Resort, Fantazia Royal, and Sirena Resort. It is a **multi-property platform from day one**: adding a fourth resort, in this
 destination or another, is a configuration and integration task rather than a new software
 project.
 
@@ -81,6 +81,9 @@ docs/design/      Standalone design mockups
 - **Languages:** English is the default and source language. Additional locales — up to
   seven — are added, translated, and published from the admin panel with no deploy. RTL is a
   per-locale property, not an Arabic special case.
+- **The group's own name is data too.** It appears in the header, footer, every page title
+  and every email, so it lives in one settings row and is edited in admin — not found and
+  replaced across the codebase.
 - **Hotels are data, never code.** Every property, destination, room type, and offer is a
   database entity managed from the admin panel.
 - **Homepage sections are feature flags.** `SiteModule` switches each section on, off, and

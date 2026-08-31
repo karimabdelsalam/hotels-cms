@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getEnabledLocales, getMenu } from "@fantazia/db/content";
+import { getEnabledLocales, getMenu, getBrand } from "@fantazia/db/content";
 import { dirFor, isKnownLocale, KNOWN_LOCALES } from "@/lib/routing";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -25,11 +25,12 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
   const messages = await getMessages();
 
-  const [locales, primary, utility, footerC] = await Promise.all([
+  const [locales, primary, utility, footerC, brand] = await Promise.all([
     getEnabledLocales(),
     getMenu(locale, "primary"),
     getMenu(locale, "utility"),
     getMenu(locale, "footer_c"),
+    getBrand(locale),
   ]);
 
   return (
@@ -44,9 +45,9 @@ export default async function LocaleLayout({
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>
-          <SiteHeader locale={locale} primary={primary} utility={utility} locales={locales} />
+          <SiteHeader locale={locale} primary={primary} utility={utility} locales={locales} brand={brand} />
           <main id="content">{children}</main>
-          <SiteFooter locale={locale} support={footerC} />
+          <SiteFooter locale={locale} support={footerC} brand={brand} />
         </NextIntlClientProvider>
       </body>
     </html>

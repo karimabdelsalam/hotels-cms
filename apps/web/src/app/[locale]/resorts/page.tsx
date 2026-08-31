@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getResorts } from "@fantazia/db/content";
+import { getResorts, getBrand } from "@fantazia/db/content";
 import { ResortCard } from "@/components/ResortCard";
 import { alternatesFor } from "@/lib/seo";
 import { Reveal } from "@/components/Reveal";
@@ -19,8 +19,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
+  const brand = await getBrand(locale);
   return {
-    title: `${t("resortsTitle")} — Fantazia`,
+    title: `${t("resortsTitle")} — ${brand.name}`,
     description: t("lede"),
     alternates: await alternatesFor(locale, "resorts"),
   };

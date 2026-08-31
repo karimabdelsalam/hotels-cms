@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getResorts, getExperiences, getOffers, getModules } from "@fantazia/db/content";
+import { getResorts, getExperiences, getOffers, getModules, getBrand } from "@fantazia/db/content";
 import { alternatesFor } from "@/lib/seo";
 import { Hero } from "@/components/Hero";
 import { Reveal } from "@/components/Reveal";
@@ -21,9 +21,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "home" });
+  const brand = await getBrand(locale);
   return {
-    title: "Fantazia Hotels & Resorts — Marsa Alam, Red Sea",
-    description: t("lede"),
+    title: `${brand.name} — ${brand.location}, Red Sea`,
+    description: brand.tagline ?? t("lede"),
     alternates: await alternatesFor(locale),
   };
 }

@@ -3,8 +3,17 @@ import { getTranslations } from "next-intl/server";
 import { getResorts, getExperiences } from "@fantazia/db/content";
 
 type Item = { id: string; label: string; href: string };
+type Brand = { name: string; wordmark: string; location: string; tagline: string | null };
 
-export async function SiteFooter({ locale, support }: { locale: string; support: Item[] }) {
+export async function SiteFooter({
+  locale,
+  support,
+  brand,
+}: {
+  locale: string;
+  support: Item[];
+  brand: Brand;
+}) {
   const t = await getTranslations("footer");
   const [resorts, experiences] = await Promise.all([getResorts(locale), getExperiences(locale)]);
 
@@ -13,11 +22,11 @@ export async function SiteFooter({ locale, support }: { locale: string; support:
       <div className="wrap">
         <div className="foot">
           <div className="foot-brand">
-            <Link href={`/${locale}`} className="mark" aria-label="Fantazia Hotels & Resorts, home">
-              <b>FANTAZIA</b>
-              <span>Marsa Alam</span>
+            <Link href={`/${locale}`} className="mark" aria-label={`${brand.name}, home`}>
+              <b>{brand.wordmark}</b>
+              <span>{brand.location}</span>
             </Link>
-            <p>{t("blurb")}</p>
+            <p>{brand.tagline ?? t("blurb")}</p>
           </div>
 
           <div className="fcol">
@@ -55,7 +64,7 @@ export async function SiteFooter({ locale, support }: { locale: string; support:
         </div>
 
         <div className="fbar">
-          <span>© {new Date().getFullYear()} {t("rights")}</span>
+          <span>© {new Date().getFullYear()} {brand.name} · {brand.location}</span>
         </div>
       </div>
     </footer>
