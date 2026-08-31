@@ -295,6 +295,24 @@ a.stat:hover { border-color: var(--sea); transform: translateY(-2px); }
 .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
   gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; max-height: 320px; overflow-y: auto; }
 
+/* ---------- room gallery ---------- */
+.shot { position: relative; margin: 0; border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--line); background: var(--panel-2); }
+.shot img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+/* The first photo is the one the room card uses, so it says so. */
+.shot--first { border-color: var(--sea); }
+.shot figcaption { position: absolute; inset-inline-start: 0; inset-block-start: 0;
+  background: var(--sea); color: #fff; font-size: 0.5625rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px;
+  border-end-end-radius: 8px; }
+.shot-ctrls { position: absolute; inset-block-end: 0; inset-inline: 0;
+  display: flex; justify-content: center; gap: 1px; padding: 3px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent); }
+.shot-ctrls .ic { padding: 2px 6px; font-size: 0.75rem; }
+.shot--pick { padding: 0; cursor: pointer; }
+.shot--pick:hover:not(:disabled) { border-color: var(--sea); }
+.shot--pick:disabled { opacity: 0.5; cursor: default; }
+
 /* ---------- translations ---------- */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters .inp { width: auto; min-width: 150px; }

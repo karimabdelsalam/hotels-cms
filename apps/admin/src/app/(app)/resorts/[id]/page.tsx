@@ -17,7 +17,18 @@ export default async function ResortEditPage({
     where: { id },
     include: {
       translations: true,
-      roomTypes: { orderBy: { displayOrder: "asc" }, include: { translations: true } },
+      roomTypes: {
+        orderBy: { displayOrder: "asc" },
+        include: {
+          translations: true,
+          media: {
+            orderBy: { displayOrder: "asc" },
+            include: {
+              media: { include: { translations: { where: { localeCode: "en" }, select: { alt: true } } } },
+            },
+          },
+        },
+      },
     },
   });
   if (!resort) notFound();
@@ -101,6 +112,11 @@ export default async function ResortEditPage({
             name: t.name,
             slug: t.slug,
             description: t.description,
+          })),
+          images: rt.media.map((m) => ({
+            id: m.media.id,
+            storageKey: m.media.storageKey,
+            alt: m.media.translations[0]?.alt ?? "",
           })),
         }))}
         canWrite={actor.permissions.has("content:write")}

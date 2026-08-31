@@ -383,6 +383,19 @@ button { font-family: inherit; }
 }
 .room-body { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .room-body p { color: var(--ink-2); font-size: 0.9375rem; max-width: 52ch; }
+/* With a photo the card becomes a picture and a panel. Padding moves onto the
+   panel so the image can reach the card's own edges. */
+.room--shot { padding: 0; align-items: stretch; gap: 0; flex-wrap: nowrap; flex-direction: column; overflow: hidden; }
+.room--shot .room-body,
+.room--shot .rate { padding: 26px; }
+.room-shot { position: relative; aspect-ratio: 16 / 10; overflow: hidden; }
+@media (min-width: 900px) {
+  /* A floor, not a fixed height: a longer description still grows the card,
+     and without it a photo card sits shorter than its photoless neighbours. */
+  .room--shot { flex-direction: row; align-items: center; min-height: 210px; }
+  .room-shot { flex: 0 0 320px; aspect-ratio: auto; align-self: stretch; }
+  .room--shot .room-body { flex: 1 1 auto; }
+}
 
 /* ---------- footer ---------- */
 .footer { background: var(--abyss); color: var(--on-deep-2); }

@@ -110,6 +110,7 @@ export function ResortEditor({
         rooms={rooms}
         locales={locales}
         currency={resort.currency}
+        assets={assets}
         canWrite={canWrite}
       />
     </div>

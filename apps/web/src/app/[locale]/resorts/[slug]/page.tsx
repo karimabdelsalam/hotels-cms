@@ -108,13 +108,26 @@ export default async function ResortPage({ params }: Props) {
             <div className="rooms">
               {resort.rooms.map((room, i) => (
                 <Reveal key={room.id} delay={i * 0.06} as="div">
-                  <article className="room">
+                  <article className={`room${room.images.length > 0 ? " room--shot" : ""}`}>
+                    {room.images[0] && (
+                      <div className="room-shot">
+                        <Media
+                          media={room.images[0]}
+                          fallbackClass="f-2"
+                          sizes="(min-width: 900px) 320px, 100vw"
+                        />
+                      </div>
+                    )}
                     <div className="room-body">
                       <h3 className="d3">{room.name}</h3>
                       {room.description && <p>{room.description}</p>}
-                      <span className="fact">
-                        {t("sleeps")} {room.maxOccupancy}
-                      </span>
+                      <div className="facts">
+                        <span className="fact">
+                          {t("sleeps")} {room.maxOccupancy}
+                        </span>
+                        {room.sizeSqm != null && <span className="fact">{room.sizeSqm} m²</span>}
+                        {room.bedConfig && <span className="fact">{room.bedConfig}</span>}
+                      </div>
                     </div>
                     {room.fromRateMinor != null && (
                       <div className="rate">

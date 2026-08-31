@@ -149,7 +149,13 @@ export async function getResortBySlug(locale: string, slug: string) {
       roomTypes: {
         where: { active: true },
         orderBy: { displayOrder: "asc" },
-        include: { translations: true },
+        include: {
+          translations: true,
+          media: {
+            orderBy: { displayOrder: "asc" },
+            include: { media: { include: { translations: true } } },
+          },
+        },
       },
     },
   });
@@ -193,7 +199,19 @@ export async function getResortBySlug(locale: string, slug: string) {
       maxOccupancy: rt.maxOccupancy,
       maxAdults: rt.maxAdults,
       maxChildren: rt.maxChildren,
+      sizeSqm: rt.sizeSqm,
+      bedConfig: rt.bedConfig,
       fromRateMinor: rt.fromRateMinor,
+      // Alt text falls back through the locale chain like any other field, so a
+      // photo described only in English is still described in Arabic rather
+      // than reaching a screen reader empty.
+      images: rt.media.map((m) => ({
+        storageKey: m.media.storageKey,
+        alt: field(m.media.translations, locale, "alt") ?? "",
+        placeholder: m.media.placeholder,
+        focalX: m.media.focalX,
+        focalY: m.media.focalY,
+      })),
     })),
   };
 }

@@ -262,3 +262,101 @@ export async function moveRoom(roomTypeId: string, direction: "up" | "down") {
   await revalidatePublicSite();
   return { ok: true as const };
 }
+
+/* ------------------------------------------------------------------ *
+ * Room photos
+ *
+ * Images come from the media library, never uploaded here: that is what
+ * guarantees every photo already has alt text and a focal point before it
+ * can appear on a room card.
+ * ------------------------------------------------------------------ */
+
+export async function addRoomImage(roomTypeId: string, mediaId: string) {
+  const g = await guard(roomTypeId);
+  if (!g.ok) return { error: g.error };
+
+  const exists = await prisma.mediaAsset.findUnique({ where: { id: mediaId }, select: { id: true } });
+  if (!exists) return { error: "That image is no longer in the library." };
+
+  const count = await prisma.roomTypeMedia.count({ where: { roomTypeId } });
+  await prisma.roomTypeMedia.upsert({
+    where: { roomTypeId_mediaId: { roomTypeId, mediaId } },
+    update: {}, // already there — adding it twice is a no-op, not an error
+    create: { roomTypeId, mediaId, displayOrder: count },
+  });
+
+  await audit(g.actor, "room.image.add", "RoomType", roomTypeId, null, { mediaId });
+  revalidatePath(`/resorts/${g.resortId}`);
+  await revalidatePublicSite();
+  return { ok: true as const };
+}
+
+export async function removeRoomImage(roomTypeId: string, mediaId: string) {
+  const g = await guard(roomTypeId);
+  if (!g.ok) return { error: g.error };
+
+  await prisma.roomTypeMedia.deleteMany({ where: { roomTypeId, mediaId } });
+  await renumberImages(roomTypeId);
+
+  await audit(g.actor, "room.image.remove", "RoomType", roomTypeId, { mediaId }, null);
+  revalidatePath(`/resorts/${g.resortId}`);
+  await revalidatePublicSite();
+  return { ok: true as const };
+}
+
+/** The first image is the one the room card shows, so order is not cosmetic. */
+export async function moveRoomImage(
+  roomTypeId: string,
+  mediaId: string,
+  direction: "up" | "down",
+) {
+  const g = await guard(roomTypeId);
+  if (!g.ok) return { error: g.error };
+
+  const images = await prisma.roomTypeMedia.findMany({
+    where: { roomTypeId },
+    orderBy: { displayOrder: "asc" },
+    select: { mediaId: true },
+  });
+  const index = images.findIndex((i) => i.mediaId === mediaId);
+  const to = direction === "up" ? index - 1 : index + 1;
+  if (index < 0 || to < 0 || to >= images.length) return { ok: true as const };
+
+  const next = [...images];
+  const here = next[index];
+  const there = next[to];
+  if (!here || !there) return { ok: true as const };
+  next[index] = there;
+  next[to] = here;
+
+  await prisma.$transaction(
+    next.map((img, displayOrder) =>
+      prisma.roomTypeMedia.update({
+        where: { roomTypeId_mediaId: { roomTypeId, mediaId: img.mediaId } },
+        data: { displayOrder },
+      }),
+    ),
+  );
+
+  await audit(g.actor, "room.image.reorder", "RoomType", roomTypeId, { index }, { index: to });
+  revalidatePath(`/resorts/${g.resortId}`);
+  await revalidatePublicSite();
+  return { ok: true as const };
+}
+
+/** Keeps positions dense after a removal, so 0,1,2 stays 0,1,2. */
+async function renumberImages(roomTypeId: string) {
+  const images = await prisma.roomTypeMedia.findMany({
+    where: { roomTypeId },
+    orderBy: { displayOrder: "asc" },
+    select: { mediaId: true },
+  });
+  await prisma.$transaction(
+    images.map((img, displayOrder) =>
+      prisma.roomTypeMedia.update({
+        where: { roomTypeId_mediaId: { roomTypeId, mediaId: img.mediaId } },
+        data: { displayOrder },
+      }),
+    ),
+  );
+}

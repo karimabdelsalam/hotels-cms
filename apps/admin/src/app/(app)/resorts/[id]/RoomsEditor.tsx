@@ -3,6 +3,8 @@
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Field } from "@/components/editor/Field";
+import type { PickerAsset } from "@/components/editor/ImagePicker";
+import { RoomGallery } from "./RoomGallery";
 import { LocaleTabs, type LocaleView } from "@/components/editor/LocaleTabs";
 import {
   saveRoomDetails,
@@ -30,6 +32,7 @@ export type Room = {
   fromRateMinor: number | null;
   active: boolean;
   translations: RoomTranslation[];
+  images: { id: string; storageKey: string; alt: string }[];
 };
 
 export function RoomsEditor({
@@ -37,12 +40,14 @@ export function RoomsEditor({
   rooms,
   locales,
   currency,
+  assets,
   canWrite,
 }: {
   resortId: string;
   rooms: Room[];
   locales: LocaleView[];
   currency: string;
+  assets: PickerAsset[];
   canWrite: boolean;
 }) {
   const router = useRouter();
@@ -79,6 +84,7 @@ export function RoomsEditor({
               count={rooms.length}
               locales={locales}
               currency={currency}
+              assets={assets}
               canWrite={canWrite}
               isOpen={open === room.id}
               onToggle={() => setOpen(open === room.id ? null : room.id)}
@@ -107,6 +113,7 @@ function RoomRow({
   count,
   locales,
   currency,
+  assets,
   canWrite,
   isOpen,
   onToggle,
@@ -116,6 +123,7 @@ function RoomRow({
   count: number;
   locales: LocaleView[];
   currency: string;
+  assets: PickerAsset[];
   canWrite: boolean;
   isOpen: boolean;
   onToggle: () => void;
@@ -238,7 +246,13 @@ function RoomRow({
       )}
 
       {isOpen && (
-        <RoomForms room={room} locales={locales} currency={currency} canWrite={canWrite} />
+        <RoomForms
+          room={room}
+          locales={locales}
+          currency={currency}
+          assets={assets}
+          canWrite={canWrite}
+        />
       )}
     </li>
   );
@@ -248,11 +262,13 @@ function RoomForms({
   room,
   locales,
   currency,
+  assets,
   canWrite,
 }: {
   room: Room;
   locales: LocaleView[];
   currency: string;
+  assets: PickerAsset[];
   canWrite: boolean;
 }) {
   const [tab, setTab] = useState(locales[0]?.code ?? "en");
@@ -261,6 +277,13 @@ function RoomForms({
   return (
     <div className="menu-edit">
       <DetailsForm room={room} currency={currency} canWrite={canWrite} />
+
+      <RoomGallery
+        roomId={room.id}
+        images={room.images}
+        assets={assets}
+        canWrite={canWrite}
+      />
 
       <div className="card-head">
         <h3>Text</h3>
