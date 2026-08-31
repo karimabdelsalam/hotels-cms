@@ -22,20 +22,26 @@ Written down because a roadmap that does not say what is finished is a wish list
 | ✅ | Two languages live (English, Arabic) with RTL from data, three more ready to enable | Done |
 | ✅ | Admin: content, media, pages, site sections, staff and RBAC, audit log | Done |
 | ✅ | Translation manager with drift detection, and AI translation that never overwrites a hand-edited string | Done |
-| ✅ | Menu builder — reorder, nest, per-language labels, items pointing at content not addresses | Done |
-| ✅ | Rooms editor, including photos | Done |
+| ✅ | Menu builder, rooms editor, room photos | Done |
 | ✅ | Two-step sign-in with recovery codes | Done |
 | ✅ | Booking: schema, connector contract, engine, holds, state machine, idempotency | Done |
 | ✅ | OWS connector — envelope, WS-Security, faults, redaction, lost-response recovery | Done, **untested against a live OPERA** |
 | ✅ | Simulator connector with provokable failures | Done |
 | ✅ | Public booking flow — search, results, checkout, payment, confirmation | Done |
 | ✅ | Admin bookings and the manual-review queue | Done |
-| ⏳ | Payment provider adapter | **Blocked on choosing a provider.** The seam and lifecycle are built and tested; a real adapter is `PaymentProvider` plus its signature check |
+| ✅ | Background worker — retries, hold expiry, outbox, alarms | Done |
+| ✅ | Confirmation emails, four kinds, English and Arabic, through an outbox | Done |
+| ✅ | My Booking — find, view, cancel | Done |
+| ✅ | Property-system screen — connections, resort codes, health checks | Done |
+| ✅ | Rates and terms — rate plans, meal plans, cancellation policies | Done |
+| ✅ | Bookings on the dashboard, review count first | Done |
+| ✅ | Test suite and CI | Done |
+| ⏳ | Payment provider adapter | **Blocked on choosing a provider.** The seam, webhook, signature check and idempotency are built and tested; a real adapter is `PaymentProvider` plus its signature check |
 | ⏳ | OWS against the real installation | **Blocked on the WSDL, endpoint and service account** — Stage 2 of the provisioning runbook |
 | ⏳ | OXI inventory feed | Blocked on the same. Inventory is currently seeded |
 | ⏳ | Real content and photography | Yours |
-| ⏳ | Confirmation emails | Not started |
-| ⏳ | My Booking (lookup, cancel) | Not started |
+| ⏳ | SMTP credentials | Yours — a cPanel mail account. Until then messages queue and wait |
+| ⏳ | Reporting and exports | Not started. Not on the path to launch |
 
 **Nothing on the blocked list blocks the rest.** Everything above it is built and tested
 against a simulator that stands in for OPERA, including the failure branches.
