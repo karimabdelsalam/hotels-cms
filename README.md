@@ -14,9 +14,10 @@ project.
 The booking engine and OPERA integration are deliberately last; nothing built so far
 assumes them.
 
-Working today: bilingual routing with RTL, database-driven navigation, the resort
-collection, resort detail pages with rooms, experiences, offers, and site-section feature
-flags.
+Working today: the full public site — bilingual routing with RTL, database-driven
+navigation, resorts, experiences, offers, diving, weddings, content pages, and SEO — plus
+the admin portal with sign-in, role-based access, per-language content editing, and the
+site-section switches.
 
 ## Running it
 
@@ -25,8 +26,18 @@ pnpm install
 createdb fantazia                 # or point DATABASE_URL at any Postgres 16
 cp .env.example .env
 pnpm db:push && pnpm db:seed
-pnpm --filter @fantazia/web dev   # http://localhost:3000 -> /en
+pnpm --filter @fantazia/web dev     # http://localhost:3000 -> /en
+pnpm --filter @fantazia/admin dev   # http://localhost:3001
 ```
+
+Dev sign-in for the admin (seeded, development only):
+
+| Account | Password | Sees |
+| --- | --- | --- |
+| `admin@fantazia.test` | `fantazia-dev` | Every resort, every section |
+| `sirena@fantazia.test` | `fantazia-dev` | Sirena Resort only |
+
+The second account exists so the tenancy rules are exercised rather than assumed.
 
 `pnpm db:reset` rebuilds and reseeds. `pnpm db:studio` opens Prisma Studio.
 
@@ -34,6 +45,7 @@ pnpm --filter @fantazia/web dev   # http://localhost:3000 -> /en
 
 ```
 apps/web          Next.js 15 - public site, App Router, next-intl
+apps/admin        Next.js 15 - staff portal, own hostname, noindex
 packages/db       Prisma schema, seed, and typed content queries
 docs/             Architecture, data model, integration, design, runbooks
 docs/design/      Standalone design mockups

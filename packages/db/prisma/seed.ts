@@ -347,6 +347,12 @@ async function main() {
       data: { menuId: primary.id, position: pos++, targetType: "page", pageId: aboutPage.id },
     });
   }
+  // Deliberately present while its module is off: it renders nowhere on the
+  // site, and admin shows why. This is what lets a menu item wait for a resort
+  // that opens next season without leaking onto the live site.
+  await db.menuItem.create({
+    data: { menuId: primary.id, position: pos++, targetType: "route", route: "/destinations" },
+  });
 
   const utility = await db.menu.upsert({
     where: { key: "utility" }, update: {},
@@ -419,6 +425,51 @@ async function main() {
     });
   }
 
+  // ---------- staff accounts ----------
+  // Dev credentials only. Production seeds nothing and the first account is
+  // created by an administrator.
+  const { hash } = await import("@node-rs/argon2");
+  const devPassword = await hash("fantazia-dev", {
+    memoryCost: 19456,
+    timeCost: 2,
+    parallelism: 1,
+  });
+
+  const owner = await db.user.upsert({
+    where: { email: "admin@fantazia.test" },
+    update: {},
+    create: {
+      email: "admin@fantazia.test",
+      passwordHash: devPassword,
+      firstName: "Karim",
+      lastName: "Abdelsalam",
+      status: "active",
+      roles: { create: [{ roleKey: "SUPER_ADMIN" }] },
+    },
+  });
+
+  // A scoped user, so the tenancy rules are exercised rather than assumed:
+  // a resort-level role with one row sees exactly one resort.
+  const sirenaManager = await db.user.upsert({
+    where: { email: "sirena@fantazia.test" },
+    update: {},
+    create: {
+      email: "sirena@fantazia.test",
+      passwordHash: devPassword,
+      firstName: "Sirena",
+      lastName: "Manager",
+      status: "active",
+      roles: { create: [{ roleKey: "RESORT_ADMIN" }] },
+    },
+  });
+  await db.userResortAccess.upsert({
+    where: { userId_resortId: { userId: sirenaManager.id, resortId: resortIds.SIRENA! } },
+    update: {},
+    create: { userId: sirenaManager.id, resortId: resortIds.SIRENA! },
+  });
+
+  void owner;
+
   console.log("Seeded:");
   console.log(`  locales      ${await db.locale.count()} (2 enabled)`);
   console.log(`  destinations ${await db.destination.count()}`);
@@ -430,6 +481,10 @@ async function main() {
   console.log(`  menu items   ${await db.menuItem.count()}`);
   console.log(`  modules      ${await db.siteModule.count()} (destinations off)`);
   console.log(`  roles        ${await db.role.count()}`);
+  console.log(`  users        ${await db.user.count()}`);
+  console.log("");
+  console.log("  Dev sign-in: admin@fantazia.test / fantazia-dev  (all resorts)");
+  console.log("               sirena@fantazia.test / fantazia-dev  (Sirena only)");
 }
 
 main()
