@@ -96,6 +96,8 @@ Confirmed, and it changes several earlier assumptions for the better:
 - **One multi-property OPERA 5.6 on-premise installation** hosts all three hotels,
   distinguished by resort code — not three separate installations. Latest patch level.
 - **An OXI server is in place**, and interfaces can be configured on request.
+- **OWS is licensed and running.** Confirmed by the property team. This is what makes
+  instant confirmation at checkout possible rather than aspirational.
 - **We are the Oracle support provider for the property.** There is no third-party
   gatekeeper: the same team that builds this platform administers the PMS environment.
 - Resort codes exist for all three properties.
@@ -172,10 +174,15 @@ Real-time availability and reservation creation straight into OPERA, bypassing t
 simpler than originally assumed, because there is one installation rather than three — one
 endpoint, one credential set, one resort-code parameter.
 
-It stays unbuilt for now. It would only be worth it if the CM's direct-booking API proves
-inadequate, or if live per-request availability turns out to matter more than the ARI
-snapshot delivers. Requires the OWS component licensed (separate from OXI) and a network
-path — see §5.
+**Built, and now the primary path.** OWS is licensed and running — confirmed by the property
+team — so reservations go straight into OPERA over OWS and the confirmation number comes
+back in the same call. See `packages/booking/src/connector/ows.ts`.
+
+Availability still reads the OXI-fed snapshot rather than calling OWS per request. That is
+deliberate, not a limitation: three resorts sit behind one installation, so live search
+would let a single OPERA outage take the whole group's search offline together. Reading a
+pushed snapshot means only creating a reservation needs the connection up. The site stays
+searchable and browsable through an outage; only the last step waits.
 
 ### `DelegatedBookingEngineConnector` — the fallback
 
@@ -189,11 +196,16 @@ vendor's UI, not ours.** The design work stops at the Book button. For a group t
 world-class site, that is the last place to compromise — which is exactly why the API
 question above is the one to press hardest on.
 
-### `MockConnector` — the one that unblocks everything
+### `SimulatorConnector` — the one that unblocks everything
 
-A deterministic, seeded fake with configurable latency, failure injection, and realistic
-Egyptian room types, rate plans, and EGP pricing. It implements the full interface and every
-capability combination.
+A property system living in our own database, with provokable failure injection: a
+reference containing FAIL-REJECT is refused outright, FAIL-TRANSPORT times out, and
+FAIL-LOST creates the reservation and *then* reports a transport failure — the exact shape
+that produces two bookings for one guest if the engine does not look before it retries.
+
+Its reservations are stored in a table rather than in memory, so it behaves like an external
+system across process boundaries and restarts. An in-process map could not exercise the case
+it exists for.
 
 This is not a stopgap; it is a first-class deliverable. **All of Phases 1–3 are built and
 tested against it**, so the website, booking engine, payment flow, and admin can be finished
@@ -401,4 +413,4 @@ our side too. One more reason OWS is worth having.
 - Phase 4 grows by roughly two weeks: SOAP client, XML schema mapping, and certification
   against the hotel's real configuration are more work than consuming a vendor REST API.
 
-None of it blocks Phases 1–3, which run entirely on the mock connector.
+None of it blocks the build, which runs entirely on the simulator connector.

@@ -2,7 +2,7 @@
 
 ## The organising principle
 
-**Everything through Phase 4 is built against the mock connector.** The website, booking
+**Everything through Phase 4 is built against the simulator connector.** The website, booking
 engine, payment flow, and admin portal can be complete and demo-ready before a single
 decision is made about channel managers, OPERA licensing, or VPN access.
 
@@ -10,6 +10,35 @@ This matters because the integration decision is the one thing genuinely outside
 control — it depends on hotel IT, vendor contracts, and Oracle licensing. Sequencing it
 first would idle the project for weeks. Sequencing it late costs nothing, because the
 `PropertyConnector` interface is the same either way.
+
+## Where the build actually stands
+
+Written down because a roadmap that does not say what is finished is a wish list.
+
+| | Area | State |
+| --- | --- | --- |
+| ✅ | Monorepo, Postgres, Prisma schema and migrations, seed | Done |
+| ✅ | Public site — home, resorts, rooms, offers, experiences, reef, weddings, pages | Done |
+| ✅ | Two languages live (English, Arabic) with RTL from data, three more ready to enable | Done |
+| ✅ | Admin: content, media, pages, site sections, staff and RBAC, audit log | Done |
+| ✅ | Translation manager with drift detection, and AI translation that never overwrites a hand-edited string | Done |
+| ✅ | Menu builder — reorder, nest, per-language labels, items pointing at content not addresses | Done |
+| ✅ | Rooms editor, including photos | Done |
+| ✅ | Two-step sign-in with recovery codes | Done |
+| ✅ | Booking: schema, connector contract, engine, holds, state machine, idempotency | Done |
+| ✅ | OWS connector — envelope, WS-Security, faults, redaction, lost-response recovery | Done, **untested against a live OPERA** |
+| ✅ | Simulator connector with provokable failures | Done |
+| ✅ | Public booking flow — search, results, checkout, payment, confirmation | Done |
+| ✅ | Admin bookings and the manual-review queue | Done |
+| ⏳ | Payment provider adapter | **Blocked on choosing a provider.** The seam and lifecycle are built and tested; a real adapter is `PaymentProvider` plus its signature check |
+| ⏳ | OWS against the real installation | **Blocked on the WSDL, endpoint and service account** — Stage 2 of the provisioning runbook |
+| ⏳ | OXI inventory feed | Blocked on the same. Inventory is currently seeded |
+| ⏳ | Real content and photography | Yours |
+| ⏳ | Confirmation emails | Not started |
+| ⏳ | My Booking (lookup, cancel) | Not started |
+
+**Nothing on the blocked list blocks the rest.** Everything above it is built and tested
+against a simulator that stands in for OPERA, including the failure branches.
 
 ## Phases
 
@@ -43,7 +72,7 @@ import and export with a dry-run diff, optional machine pre-fill, the publish ga
 site, and publish it — with no deploy.
 
 ### Phase 2 — Search & availability · ~3 weeks
-`PropertyConnector` interface and the mock connector with failure injection. Inventory
+`PropertyConnector` interface and the simulator connector with failure injection. Inventory
 sync, snapshot table, Redis caching, circuit breakers. Group and property search, results
 grouped by hotel, the search widget, filters, degraded-property handling.
 

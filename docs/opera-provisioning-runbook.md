@@ -52,29 +52,41 @@ Collect and send:
 
 ---
 
-## Stage 2 — The OWS question
+## Stage 2 — OWS: settled
 
-**This is the one open decision, and it shapes checkout.**
+**Confirmed by the property team: OWS is licensed and running.** This was the one open
+decision and it is closed, in the best possible way.
 
-OWS (OPERA Web Services) is a **separately licensed module**. Having OXI does not mean
-OWS is present — they are different products solving different problems.
+It settles the architecture: OXI keeps availability and rates current, OWS carries the
+transaction and returns a confirmation number in the same call. The guest sees a real PMS
+confirmation number at the end of checkout, not "we are confirming your stay" — which
+converts better and stops the calls to the resort that the alternative generates.
 
-**2.1 — Check whether the OWS licence is active** in the property's licence configuration.
+`instantConfirmation: true` is therefore honest for all three resorts, and the code assumes
+it. OXI stays read-only for us: with OWS present there is no reason for two write paths into
+the same reservation table.
 
-**2.2 — Check whether the OWS web-service layer is deployed** on the application server.
+### What we still need from you at this stage
 
-**2.3 — Report one of three outcomes:**
+**2.1 — Export the WSDL** for each deployed OWS service (Reservation, Availability,
+Information at minimum). This is not a formality. The service names, SOAP actions and
+namespace versions differ between OPERA releases, and our connector reads them from
+configuration rather than assuming them, precisely so that nobody discovers a wrong
+namespace in production. A wrong namespace comes back as a fault, not an error — the
+booking simply fails, and nothing anywhere says why.
 
-| Outcome | What happens next |
-| --- | --- |
-| Licensed **and** deployed | Proceed to Stage 3. Best case — instant confirmation at checkout |
-| Licensed, not deployed | Deploy it. Send us the internal service endpoint once it responds |
-| Not licensed | Get an Oracle quote and send it to us with the figure. We decide licence vs. OXI-only |
+Send: the `.wsdl` files, or the URLs we can fetch them from inside the network.
 
-**If OWS is not available**, the platform still works: reservations go over OXI instead, and
-checkout ends with our booking reference and "we are confirming your stay" rather than a PMS
-confirmation number, which arrives minutes later. It converts worse and generates calls to
-the resort, so **get the quote before ruling it out.**
+**2.2 — The internal service endpoint.** The base URL our application server will POST to.
+Internal address, not published to the internet.
+
+**2.3 — A service account** with permission to read availability and to create, read and
+cancel reservations, scoped to the three resort codes and nothing else. Send the username
+and password by whatever channel you use for credentials — never in the same message as the
+endpoint, and never in a ticket.
+
+We store a *pointer* to that credential, never the credential itself. It lives in the
+server's environment, named by the `credentialRef` on the integration row.
 
 ---
 
@@ -244,7 +256,10 @@ estimated — it has to be measured.
 | | Item | Stage |
 | --- | --- | --- |
 | ☐ | Version, patch level, chain code, resort codes, currency, timezone | 1 |
-| ☐ | OWS outcome: licensed and deployed / deployed on request / quote attached | 2 |
+| ☑ | OWS outcome — **licensed and running** (confirmed by the property team) | 2 |
+| ☐ | WSDL exports for the deployed OWS services | 2 |
+| ☐ | Internal OWS endpoint URL | 2 |
+| ☐ | Service account scoped to the three resort codes | 2 |
 | ☐ | Dedicated OXI interface created, ID sent | 3 |
 | ☐ | Service account created, credentials sent securely | 3 |
 | ☐ | Message subscriptions confirmed, unsupported types flagged | 4 |
@@ -275,10 +290,13 @@ Stage 6 ─┘                              ▲
 Stage 7 ────────────────────────────────┘
 ```
 
-**Nothing here blocks development.** Phases 1–3 of the build run entirely against a mock
-connector, so the website, booking engine, payment flow, and admin are finished and
-demonstrable while this runs alongside.
+**Nothing here blocks development, and this is not a promise — it is already true.** The
+website, the booking engine, the payment flow and the admin are built and tested end to end
+against a simulator that stands in for OPERA: search, hold, checkout, payment, reservation,
+confirmation, and the failure branches including a reservation that succeeds while the
+response is lost. Switching a resort to OWS is a row in `integration_environments` and a set
+of environment variables — no code changes.
 
-**The two items worth starting today** are the OWS licence check (Stage 2) and the rate-code
+**The two items worth starting today** are the WSDL and endpoint export (Stage 2) and the rate-code
 export with the sellable column marked (Stage 6.2). One decides the shape of checkout; the
 other is the item most likely to be late.
