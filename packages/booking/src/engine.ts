@@ -13,6 +13,7 @@ import { generateReference } from "./reference";
 import { canTransition, IllegalTransition, type BookingState } from "./states";
 import { runOnce } from "./idempotency";
 import { availabilityFromSnapshot, nightsBetween } from "./connector/snapshot";
+import { queueNotification } from "./email";
 
 const HOLD_MINUTES = 15;
 
@@ -525,6 +526,7 @@ export async function confirmBooking(
         payload: { externalReservationId: ref.externalReservationId },
         data: { externalReservationId: ref.externalReservationId },
       });
+      await queueNotification({ bookingId, kind: "pending_confirmation" });
       return { status: "pending_confirmation", reference: booking.reference };
     }
 
@@ -545,6 +547,9 @@ export async function confirmBooking(
         payload: { code: error.code, message: error.message, attempt },
         data: { nextAttemptAt: null },
       });
+      // The guest is told the truth immediately rather than left wondering
+      // why a payment went through and no confirmation came.
+      await queueNotification({ bookingId, kind: "needs_review" });
       return { status: "needs_review", reference: booking.reference, reason: error.message };
     }
 
@@ -574,6 +579,7 @@ async function adopt(
       nextAttemptAt: null,
     },
   });
+  await queueNotification({ bookingId, kind: "confirmed" });
 }
 
 async function scheduleOrReview(
@@ -592,6 +598,7 @@ async function scheduleOrReview(
       payload: { attempt, reason },
       data: { nextAttemptAt: null },
     });
+    await queueNotification({ bookingId, kind: "needs_review" });
     return { status: "needs_review", reference, reason };
   }
 

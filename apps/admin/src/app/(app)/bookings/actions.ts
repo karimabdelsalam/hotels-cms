@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@fantazia/db";
-import { confirmBooking, transition, connectorFor } from "@fantazia/booking";
+import { confirmBooking, transition, connectorFor, queueNotification } from "@fantazia/booking";
 import { requirePermissionForAction, assertResortInScopeForAction } from "@/server/auth";
 import { audit } from "@/server/audit";
 
@@ -97,6 +97,7 @@ export async function attachReference(_prev: unknown, formData: FormData) {
     },
   });
 
+  await queueNotification({ bookingId: d.bookingId, kind: "confirmed" });
   await audit(g.actor, "booking.attach_reference", "Booking", d.bookingId, null, d);
   revalidatePath(`/bookings/${d.bookingId}`);
   revalidatePath("/bookings");
@@ -162,6 +163,7 @@ export async function cancelBooking(bookingId: string, refund: boolean) {
     });
   }
 
+  await queueNotification({ bookingId, kind: "cancelled" });
   await audit(g.actor, "booking.cancel", "Booking", bookingId, { status: booking.status }, { refund });
   revalidatePath(`/bookings/${bookingId}`);
   revalidatePath("/bookings");

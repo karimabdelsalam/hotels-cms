@@ -1040,9 +1040,10 @@ model Booking {
   resort   Resort         @relation(fields: [resortId], references: [id], onDelete: Restrict)
   guest    Guest          @relation(fields: [guestId], references: [id], onDelete: Restrict)
   hold     BookingHold?   @relation(fields: [holdId], references: [id], onDelete: SetNull)
-  rooms    BookingRoom[]
-  payments Payment[]
-  events   BookingEvent[]
+  rooms         BookingRoom[]
+  payments      Payment[]
+  events        BookingEvent[]
+  notifications BookingNotification[]
 
   @@index([resortId, checkIn])
   @@index([status, createdAt])
@@ -1195,4 +1196,40 @@ model SimulatorReservation {
   updatedAt          DateTime @updatedAt
 
   @@map("simulator_reservations")
+}
+
+/// Messages waiting to go out.
+///
+/// An outbox rather than a call at the moment of the transition. Sending
+/// inline means an SMTP hiccup either loses a guest's confirmation or, if
+/// retried naively, sends it twice — and it puts a slow network call inside a
+/// database transaction. A row here is written with the transition; the worker
+/// drains it, retries what failed, and gives up loudly rather than silently.
+model BookingNotification {
+  id        String @id @default(cuid())
+  bookingId String
+  /// confirmed | pending_confirmation | needs_review | cancelled
+  kind      String
+  /// email — SMS may follow, and the kind is what the template keys on.
+  channel   String @default("email")
+  recipient String
+  locale    String @db.VarChar(12)
+
+  status      String    @default("pending") // pending | sent | failed
+  attempts    Int       @default(0)
+  lastError   String?
+  nextAttemptAt DateTime @default(now())
+  sentAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  /// One message of each kind per booking. A retried transition, a duplicated
+  /// webhook, or a staff member pressing a button twice must not mean two
+  /// confirmation emails to the same guest.
+  @@unique([bookingId, kind, channel])
+  @@index([status, nextAttemptAt])
+  @@map("booking_notifications")
 }

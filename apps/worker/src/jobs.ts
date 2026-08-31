@@ -2,7 +2,9 @@ import { prisma } from "@fantazia/db";
 import {
   confirmBooking,
   dueForConfirmation,
+  drainOutbox,
   expireStaleHolds,
+  outboxTrouble,
   purgeExpiredKeys,
 } from "@fantazia/booking";
 
@@ -119,8 +121,32 @@ export function reportMissingConfirmationNumbers(): Promise<JobResult> {
   });
 }
 
+/**
+ * Sends the queued messages.
+ *
+ * Runs after the confirmation job in the same pass, so a booking confirmed
+ * this minute has its email out this minute rather than next.
+ */
+export function sendQueuedEmails(): Promise<JobResult> {
+  return guard("email", async () => {
+    const result = await drainOutbox(20);
+    if (result.skipped) return result.skipped;
+
+    const trouble = await outboxTrouble();
+    const parts: string[] = [];
+    if (result.sent > 0) parts.push(`${result.sent} sent`);
+    if (result.failed > 0) parts.push(`${result.failed} will retry`);
+    if (result.gaveUp > 0) parts.push(`⚠ ${result.gaveUp} GIVEN UP ON`);
+    // A guest with no confirmation phones the resort, so a stuck outbox is
+    // said out loud on every pass rather than only when it changes.
+    if (trouble.failed > 0) parts.push(`⚠ ${trouble.failed} undelivered in total`);
+    return parts.length === 0 ? "nothing queued" : parts.join(" · ");
+  });
+}
+
 export const JOBS = [
   confirmDueBookings,
+  sendQueuedEmails,
   expireHolds,
   reportReviewQueue,
   reportMissingConfirmationNumbers,

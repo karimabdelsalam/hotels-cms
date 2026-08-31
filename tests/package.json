@@ -12,7 +12,10 @@
     "@fantazia/worker": "workspace:*"
   },
   "devDependencies": {
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^22.10.7",
+    "mailparser": "^3.9.19",
+    "smtp-server": "^3.19.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

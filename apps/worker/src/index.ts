@@ -48,7 +48,9 @@ async function pass(): Promise<void> {
       // hour is a log nobody reads, and the warnings are what matter here.
       const boring =
         !result.failed &&
-        /^(nothing due|none stale|nothing to purge|empty|all present)$/.test(result.summary);
+        /^(nothing due|none stale|nothing to purge|empty|all present|nothing queued)$/.test(
+          result.summary,
+        );
       if (!boring) log(`${result.name}: ${result.summary}`);
     }
   } finally {
