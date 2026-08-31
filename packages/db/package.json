@@ -14,7 +14,10 @@
     "reset": "prisma db push --force-reset && pnpm seed",
     "seed": "tsx prisma/seed.ts",
     "studio": "prisma studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1"

@@ -2,7 +2,9 @@
   "name": "fantazia-platform",
   "private": true,
   "packageManager": "pnpm@10.33.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -12,7 +14,9 @@
     "db:push": "pnpm --filter @fantazia/db push",
     "db:seed": "pnpm --filter @fantazia/db seed",
     "db:reset": "pnpm --filter @fantazia/db reset",
-    "db:studio": "pnpm --filter @fantazia/db studio"
+    "db:studio": "pnpm --filter @fantazia/db studio",
+    "db:migrate": "pnpm --filter @fantazia/db migrate",
+    "db:deploy": "pnpm --filter @fantazia/db migrate:deploy"
   },
   "devDependencies": {
     "turbo": "^2.5.5",

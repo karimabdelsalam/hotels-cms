@@ -47,6 +47,11 @@ Dev sign-in for the admin (seeded, development only):
 The second account exists so the tenancy rules are exercised rather than assumed.
 
 `pnpm db:reset` rebuilds and reseeds. `pnpm db:studio` opens Prisma Studio.
+`pnpm db:migrate` creates a migration after a schema change; `pnpm db:deploy` applies
+pending ones, which is what the server runs.
+
+Deploying to the VPS is covered in [`docs/deployment.md`](docs/deployment.md); the
+configuration it refers to lives in `infra/`.
 
 ## Layout
 
@@ -56,6 +61,7 @@ apps/admin        Next.js 15 - staff portal, own hostname, noindex
 packages/db       Prisma schema, seed, and typed content queries
 docs/             Architecture, data model, integration, design, runbooks
 docs/design/      Standalone design mockups
+infra/            PM2, Apache, deploy and backup scripts
 ```
 
 ## Documents
@@ -71,6 +77,7 @@ docs/design/      Standalone design mockups
 | [`docs/authorization.md`](docs/authorization.md) | Multi-property tenancy, roles, permission matrix, enforcement |
 | [`docs/site-structure.md`](docs/site-structure.md) | Page types, the full route map, and the menu system |
 | [`docs/opera-provisioning-runbook.md`](docs/opera-provisioning-runbook.md) | **Step-by-step setup for the PMS team** — what to configure, export, and hand back |
+| [`docs/deployment.md`](docs/deployment.md) | **Deploying to the VPS** — PostgreSQL, PM2, Apache, SSL, firewall, backups |
 | [`docs/design-system.md`](docs/design-system.md) | Design direction, tokens, typography, multi-script and RTL rules, component system |
 | [`docs/roadmap.md`](docs/roadmap.md) | Delivery phases, dependencies, risks |
 
