@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { prisma } from "@fantazia/db";
 
 /**
  * Runs every *.test.ts in this directory, in its own process.
@@ -26,7 +27,43 @@ const run = (file: string) =>
     child.on("exit", (code) => resolve(code === 0));
   });
 
+/**
+ * These tests read real availability, so an unseeded database makes every one
+ * of them fail on something unrelated to what it is testing. Said plainly here
+ * rather than discovered from a stack trace.
+ */
+async function requireSeed(): Promise<void> {
+  try {
+    const [resorts, inventory] = await Promise.all([
+      prisma.resort.count(),
+      prisma.inventorySnapshot.count(),
+    ]);
+    if (resorts === 0 || inventory === 0) {
+      console.error(
+        `\nThe database is not seeded (${resorts} resorts, ${inventory} inventory rows).\n` +
+          "Run:  pnpm db:seed && pnpm --filter @fantazia/db seed:booking\n",
+      );
+      process.exit(1);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // No schema and no seed need different fixes, so they get different
+    // instructions rather than one vague "check the database".
+    const noSchema = /does not exist in the current database/.test(message);
+    console.error(
+      noSchema
+        ? "\nThe database has no schema yet.\nRun:  pnpm db:deploy && pnpm db:seed && pnpm --filter @fantazia/db seed:booking\n"
+        : `\nCould not reach the database: ${message}\n` +
+          "Check DATABASE_URL and that Postgres is running.\n",
+    );
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect().catch(() => undefined);
+  }
+}
+
 async function main() {
+  await requireSeed();
   const failed: string[] = [];
   for (const file of files) {
     console.log(`\n\x1b[1m── ${file} ${"─".repeat(Math.max(0, 60 - file.length))}\x1b[0m`);

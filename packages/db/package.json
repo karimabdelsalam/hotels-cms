@@ -19,7 +19,8 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "migrate:status": "prisma migrate status",
-    "sync:strings": "tsx sync.ts"
+    "sync:strings": "tsx sync.ts",
+    "seed:booking": "tsx seed-booking.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1"

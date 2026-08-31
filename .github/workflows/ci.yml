@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fantazia
+          POSTGRES_PASSWORD: fantazia
+          POSTGRES_DB: fantazia
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U fantazia"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # connection_limit is not optional: Prisma's default pool is
+      # (cpus * 2 + 1) per process and a Next build runs several workers at
+      # once, which exhausts Postgres mid-build and fails the run.
+      DATABASE_URL: "postgresql://fantazia:fantazia@127.0.0.1:5432/fantazia?schema=public&connection_limit=5"
+      AUTH_SECRET: "ci-only-secret-at-least-thirty-two-characters"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      MEDIA_ROOT: "/tmp/fantazia-media"
+      REVALIDATE_SECRET: "ci-revalidate"
+      PAYMENT_PROVIDER: "test"
+      PAYMENT_TEST_SECRET: "ci-payment-secret"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the database client
+        run: pnpm --filter @fantazia/db exec prisma generate
+
+      # Migrations rather than db push: this is the same path production
+      # takes, so a migration that does not apply cleanly fails here rather
+      # than during a deploy.
+      - name: Apply migrations
+        run: pnpm --filter @fantazia/db exec prisma migrate deploy
+
+      - name: Seed
+        run: |
+          pnpm --filter @fantazia/db seed
+          pnpm --filter @fantazia/db seed:booking
+
+      - name: Typecheck
+        run: pnpm -r typecheck
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

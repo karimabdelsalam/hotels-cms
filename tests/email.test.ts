@@ -95,8 +95,12 @@ async function main() {
   check("it reached the server", received.length === 1, `${received.length}`);
 
   const mail = received[0]!;
-  check("addressed to the guest", mail.to?.text === "yara@example.test", mail.to?.text);
-  check("from the reservations address", mail.from?.text?.includes("reservations@"), mail.from?.text);
+  // `to` is typed as one address or an array — mailparser returns whichever
+  // the header held. Normalised rather than asserted into one shape.
+  const addressText = (value: typeof mail.to) =>
+    Array.isArray(value) ? value.map((a) => a.text).join(", ") : (value?.text ?? "");
+  check("addressed to the guest", addressText(mail.to) === "yara@example.test", addressText(mail.to));
+  check("from the reservations address", Boolean(mail.from?.text?.includes("reservations@")), mail.from?.text);
   check("the subject carries the reference", /FNT-MAIL-01/.test(mail.subject ?? ""), mail.subject);
   check("there is a plain-text part", Boolean(mail.text?.trim()));
   check("there is an HTML part", Boolean(mail.html));
