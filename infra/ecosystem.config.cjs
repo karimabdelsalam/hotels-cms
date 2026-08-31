@@ -51,5 +51,28 @@ module.exports = {
       error_file: "/var/log/fantazia/admin.error.log",
       out_file: "/var/log/fantazia/admin.out.log",
     },
+    {
+      ...common,
+      name: "fantazia-worker",
+      cwd: path.join(root, "apps/worker"),
+      // node directly, with tsx as a loader — NOT the tsx binary. The tsx
+      // binary spawns a child and does not forward SIGTERM, so `pm2 reload`
+      // would kill the worker mid-call instead of letting it finish. A
+      // reservation call killed halfway is a lost response, which is the one
+      // failure this whole system is arranged to avoid.
+      script: "src/index.ts",
+      interpreter: "node",
+      interpreter_args: "--import tsx",
+      // Nothing here serves traffic, and one pass a minute is ample: the
+      // shortest retry backoff is two seconds but the ladder stretches to four
+      // minutes, so a minute of granularity costs nothing.
+      env: { ...common.env, WORKER_INTERVAL_MS: 60000 },
+      // Longer than the apps: a pass may be mid-reservation when a reload
+      // lands, and the shutdown handler waits up to twenty seconds for it.
+      kill_timeout: 25000,
+      max_memory_restart: "300M",
+      error_file: "/var/log/fantazia/worker.error.log",
+      out_file: "/var/log/fantazia/worker.out.log",
+    },
   ],
 };

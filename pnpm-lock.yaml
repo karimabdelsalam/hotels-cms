@@ -110,6 +110,25 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  apps/worker:
+    dependencies:
+      '@fantazia/booking':
+        specifier: workspace:*
+        version: link:../../packages/booking
+      '@fantazia/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.13
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/booking:
     dependencies:
       '@fantazia/db':
@@ -154,6 +173,28 @@ importers:
       '@types/node':
         specifier: ^22.10.7
         version: 22.20.1
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  tests:
+    dependencies:
+      '@fantazia/booking':
+        specifier: workspace:*
+        version: link:../packages/booking
+      '@fantazia/db':
+        specifier: workspace:*
+        version: link:../packages/db
+      '@fantazia/worker':
+        specifier: workspace:*
+        version: link:../apps/worker
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.13
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

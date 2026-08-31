@@ -44,6 +44,24 @@ log "Reloading"
 # listen, then stops the old one. No dropped requests.
 pm2 reload infra/ecosystem.config.cjs --update-env
 
+log "Checking the worker"
+# The worker is not an HTTP service, so health is "PM2 says it is online and it
+# has not just crash-looped". A worker that is down means paid bookings stop
+# being retried and nobody finds out until a guest arrives.
+sleep 3
+worker_state=$(pm2 jlist | node -e "
+  let raw = ''; process.stdin.on('data', c => raw += c).on('end', () => {
+    const app = JSON.parse(raw).find(a => a.name === 'fantazia-worker');
+    if (!app) { console.log('missing'); return; }
+    console.log(app.pm2_env.status + ':' + app.pm2_env.restart_time);
+  });
+")
+case "$worker_state" in
+  online:*) echo "  ok   fantazia-worker ($worker_state)" ;;
+  missing)  echo "  FAIL fantazia-worker is not defined in PM2"; exit 1 ;;
+  *)        echo "  FAIL fantazia-worker is $worker_state"; exit 1 ;;
+esac
+
 log "Checking health"
 sleep 4
 for target in "http://127.0.0.1:3000/api/health" "http://127.0.0.1:3001/api/health"; do
