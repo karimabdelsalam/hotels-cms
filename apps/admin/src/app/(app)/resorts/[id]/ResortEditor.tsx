@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { saveResortDetails, saveResortTranslation } from "./actions";
+import { ImagePicker, type PickerAsset } from "@/components/editor/ImagePicker";
+import { saveResortDetails, saveResortTranslation, setResortHero } from "./actions";
 
 type Locale = { code: string; nativeName: string; direction: string; isDefault: boolean };
 type Translation = {
@@ -25,6 +26,7 @@ type Resort = {
   fromRateMinor: number | null;
   currency: string;
   status: string;
+  heroMediaId: string | null;
 };
 
 export function ResortEditor({
@@ -32,12 +34,14 @@ export function ResortEditor({
   locales,
   translations,
   rooms,
+  assets,
   canWrite,
 }: {
   resort: Resort;
   locales: Locale[];
   translations: Translation[];
   rooms: { id: string; name: string; maxOccupancy: number; externalCode: string | null }[];
+  assets: PickerAsset[];
   canWrite: boolean;
 }) {
   const [tab, setTab] = useState<string>(locales[0]?.code ?? "en");
@@ -45,6 +49,19 @@ export function ResortEditor({
 
   return (
     <div className="editor">
+      <section className="card">
+        <h2>Hero image</h2>
+        <ImagePicker
+          label="Shown at the top of the resort page and on its card"
+          assets={assets}
+          selectedId={resort.heroMediaId}
+          canWrite={canWrite}
+          onSelect={async (id) => {
+            await setResortHero(resort.id, id);
+          }}
+        />
+      </section>
+
       <section className="card">
         <h2>Details</h2>
         <p className="note">Shared across every language.</p>

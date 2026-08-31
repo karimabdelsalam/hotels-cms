@@ -488,3 +488,8 @@ textarea.inp { resize: vertical; min-height: 96px; }
 .enq-foot { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .enq-status { font-size: 0.8125rem; color: var(--ink-3); }
 .btn[disabled] { opacity: 0.45; cursor: default; transform: none; }
+
+/* Stored images sit in the same slot as the colour fields they replace. */
+picture.fill { display: block; }
+picture.fill img { width: 100%; height: 100%; object-fit: cover;
+  background-size: cover; background-position: center; }

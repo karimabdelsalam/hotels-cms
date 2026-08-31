@@ -26,10 +26,14 @@ export default async function ResortEditPage({
   // checked before anything renders.
   assertResortInScope(actor, resort.id);
 
-  const locales = await prisma.locale.findMany({
-    where: { isEnabled: true },
-    orderBy: { displayOrder: "asc" },
-  });
+  const [locales, assets] = await Promise.all([
+    prisma.locale.findMany({ where: { isEnabled: true }, orderBy: { displayOrder: "asc" } }),
+    prisma.mediaAsset.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 120,
+      include: { translations: { where: { localeCode: "en" }, select: { alt: true } } },
+    }),
+  ]);
 
   const en = resort.translations.find((t) => t.localeCode === "en");
   const title = en?.name ?? resort.code;
@@ -57,7 +61,15 @@ export default async function ResortEditPage({
           fromRateMinor: resort.fromRateMinor,
           currency: resort.currency,
           status: resort.status,
+          heroMediaId: resort.heroMediaId,
         }}
+        assets={assets.map((a) => ({
+          id: a.id,
+          storageKey: a.storageKey,
+          alt: a.translations[0]?.alt ?? "",
+          focalX: a.focalX,
+          focalY: a.focalY,
+        }))}
         locales={locales.map((l) => ({
           code: l.code,
           nativeName: l.nativeName,

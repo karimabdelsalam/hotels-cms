@@ -7,6 +7,13 @@ import { alternatesFor } from "@/lib/seo";
 import { Reveal } from "@/components/Reveal";
 import { PageHero } from "@/components/PageHero";
 
+/**
+ * Content comes from the database and is edited in admin, so this page is
+ * revalidated rather than frozen at build time. Five minutes is the ceiling on
+ * how long an edit takes to appear; publishing does not require a deploy.
+ */
+export const revalidate = 300;
+
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

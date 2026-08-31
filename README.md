@@ -16,8 +16,15 @@ assumes them.
 
 Working today: the full public site — bilingual routing with RTL, database-driven
 navigation, resorts, experiences, offers, diving, weddings, content pages, and SEO — plus
-the admin portal with sign-in, role-based access, and editors for resorts, offers,
-experiences, and block-composed content pages, all translated per language.
+the admin portal with sign-in, role-based access, a media library, and editors for
+resorts, offers, experiences, and block-composed content pages, all translated per
+language.
+
+Images are stored on the server's own disk — no object storage. Each upload is resized to
+four widths in WebP and AVIF, stripped of camera metadata, and given an inline placeholder.
+Set `MEDIA_ROOT` to an absolute path both apps can read; on cPanel put it under
+`public_html` and set `NEXT_PUBLIC_MEDIA_URL_BASE` so the web server serves the files
+directly and Node stays out of the request path.
 
 ## Running it
 

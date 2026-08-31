@@ -52,6 +52,7 @@ export async function getResorts(locale: string) {
       translations: true,
       destination: { include: { translations: true } },
       amenities: { include: { amenity: { include: { translations: true } } } },
+      heroMedia: { include: { translations: true } },
     },
   });
 
@@ -67,6 +68,15 @@ export async function getResorts(locale: string) {
     shortDescription: field(r.translations, locale, "shortDescription"),
     description: field(r.translations, locale, "description"),
     destination: field(r.destination.translations, locale, "name"),
+    hero: r.heroMedia
+      ? {
+          storageKey: r.heroMedia.storageKey,
+          alt: field(r.heroMedia.translations, locale, "alt") ?? "",
+          placeholder: r.heroMedia.placeholder,
+          focalX: r.heroMedia.focalX,
+          focalY: r.heroMedia.focalY,
+        }
+      : null,
     amenities: r.amenities
       .map((a) => field(a.amenity.translations, locale, "name"))
       .filter((n): n is string => Boolean(n)),
@@ -86,6 +96,7 @@ export async function getResortBySlug(locale: string, slug: string) {
       translations: true,
       destination: { include: { translations: true } },
       amenities: { include: { amenity: { include: { translations: true } } } },
+      heroMedia: { include: { translations: true } },
       roomTypes: {
         where: { active: true },
         orderBy: { displayOrder: "asc" },
@@ -113,6 +124,15 @@ export async function getResortBySlug(locale: string, slug: string) {
     metaTitle: field(r.translations, locale, "metaTitle"),
     metaDescription: field(r.translations, locale, "metaDescription"),
     destination: field(r.destination.translations, locale, "name"),
+    hero: r.heroMedia
+      ? {
+          storageKey: r.heroMedia.storageKey,
+          alt: field(r.heroMedia.translations, locale, "alt") ?? "",
+          placeholder: r.heroMedia.placeholder,
+          focalX: r.heroMedia.focalX,
+          focalY: r.heroMedia.focalY,
+        }
+      : null,
     amenities: r.amenities
       .map((a) => field(a.amenity.translations, locale, "name"))
       .filter((n): n is string => Boolean(n)),

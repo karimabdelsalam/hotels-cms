@@ -101,12 +101,16 @@ model MediaAsset {
   width      Int?
   height     Int?
   bytes      Int?
-  blurhash   String?
+  /// A ~20px inline WebP data URI, so a card never reflows while its image loads.
+  placeholder  String?
+  originalName String?
   focalX     Float   @default(0.5) // every card crops the same image differently;
   focalY     Float   @default(0.5) // a face cropped out of frame is how a hotel site looks cheap
+  uploadedById String?
   createdAt  DateTime @default(now())
 
   translations MediaAssetTranslation[]
+  uploadedBy   User?                   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   destinationHeroes Destination[] @relation("DestinationHero")
   resortHeroes      Resort[]      @relation("ResortHero")
@@ -598,6 +602,7 @@ model User {
   roles        UserRole[]
   resortAccess UserResortAccess[]
   auditEntries AuditLog[]
+  uploads      MediaAsset[]
 
   @@map("users")
 }

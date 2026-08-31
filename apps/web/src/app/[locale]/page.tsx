@@ -7,6 +7,13 @@ import { Hero } from "@/components/Hero";
 import { Reveal } from "@/components/Reveal";
 import { ResortCard } from "@/components/ResortCard";
 
+/**
+ * Content comes from the database and is edited in admin, so this page is
+ * revalidated rather than frozen at build time. Five minutes is the ceiling on
+ * how long an edit takes to appear; publishing does not require a deploy.
+ */
+export const revalidate = 300;
+
 export async function generateMetadata({
   params,
 }: {

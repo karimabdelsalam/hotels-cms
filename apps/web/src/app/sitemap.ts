@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getEnabledLocales, getSitemapEntries } from "@fantazia/db/content";
 
+export const revalidate = 300;
+
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 /**

@@ -4,7 +4,15 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getResortBySlug, getEntitySlugs, formatMoney } from "@fantazia/db/content";
 import { alternatesFor, resortJsonLd } from "@/lib/seo";
+import { Media } from "@/components/Media";
 import { Reveal } from "@/components/Reveal";
+
+/**
+ * Content comes from the database and is edited in admin, so this page is
+ * revalidated rather than frozen at build time. Five minutes is the ceiling on
+ * how long an edit takes to appear; publishing does not require a deploy.
+ */
+export const revalidate = 300;
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
@@ -47,7 +55,7 @@ export default async function ResortPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <header className="resort-hero">
-        <div className="fill f-1" />
+        <Media media={resort.hero} fallbackClass="f-1" sizes="100vw" priority />
         <div className="wrap resort-hero-inner">
           <Reveal>
             <Link href={`/${locale}/resorts`} className="tag tag--surf">

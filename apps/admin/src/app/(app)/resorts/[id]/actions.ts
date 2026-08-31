@@ -159,3 +159,30 @@ export async function saveResortTranslation(_prev: unknown, formData: FormData) 
   revalidatePath("/resorts");
   return { ok: true as const, savedAt: Date.now() };
 }
+
+const HeroInput = z.object({
+  resortId: z.string().min(1),
+  mediaId: z.string().min(1).nullable(),
+});
+
+/** Set or clear a resort's hero image. */
+export async function setResortHero(resortId: string, mediaId: string | null) {
+  const actor = await requirePermissionForAction("content:write");
+  const d = HeroInput.parse({ resortId, mediaId });
+  assertResortInScopeForAction(actor, d.resortId);
+
+  if (d.mediaId) {
+    const exists = await prisma.mediaAsset.findUnique({ where: { id: d.mediaId } });
+    if (!exists) throw new Error("That image no longer exists.");
+  }
+
+  const before = await prisma.resort.findUnique({ where: { id: d.resortId } });
+  const after = await prisma.resort.update({
+    where: { id: d.resortId },
+    data: { heroMediaId: d.mediaId },
+  });
+
+  await audit(actor, "resort.hero.set", "Resort", after.id, before, after);
+  revalidatePath(`/resorts/${d.resortId}`);
+  revalidatePath("/resorts");
+}
