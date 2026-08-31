@@ -17,6 +17,7 @@ type ActorView = {
 /** Navigation is filtered by permission, so nobody is shown a door they cannot open. */
 const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/", label: "Dashboard" },
+  { href: "/bookings", label: "Bookings", permission: "bookings:read" },
   { href: "/resorts", label: "Resorts", permission: "content:read" },
   { href: "/offers", label: "Offers", permission: "content:read" },
   { href: "/experiences", label: "Experiences", permission: "content:read" },

@@ -333,9 +333,23 @@ a.stat:hover { border-color: var(--sea); transform: translateY(-2px); }
   border-radius: 8px; padding: 8px 10px; font-size: 0.875rem; letter-spacing: 0.05em;
   text-align: center; user-select: all; }
 
+/* ---------- bookings ---------- */
+/* Loud on purpose: this card only appears when a guest has paid and nothing
+   is booked, which is the one state that must not be scrolled past. */
+.card--alarm { border-color: var(--danger); background: var(--danger-bg); }
+.card--alarm h2 { color: var(--danger); }
+.chip--danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.trail { margin: 8px 0 0; padding: 12px; border-radius: 8px; background: var(--panel-2);
+  border: 1px solid var(--line); font-family: var(--mono); font-size: 0.75rem;
+  line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+  max-height: 320px; overflow: auto; }
+details > summary { cursor: pointer; padding: 4px 0; }
+
 /* ---------- translations ---------- */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .filters .inp { width: auto; min-width: 150px; }
+/* Wide enough for its own placeholder — a clipped hint is not a hint. */
+.filters input.inp { min-width: 260px; flex: 1 1 260px; max-width: 380px; }
 a.stat.on, button.stat.on { border-color: var(--sea); box-shadow: 0 0 0 2px rgba(7,135,163,.15); }
 button.stat { text-align: start; cursor: pointer; font-family: inherit; }
 

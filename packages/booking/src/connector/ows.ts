@@ -182,6 +182,7 @@ export class OwsConnector implements PropertyConnector {
   async getReservationByReference(
     reference: string,
     _resortId: string,
+    correlationId: string,
   ): Promise<ReservationDetail | null> {
     const body = `
     <FetchBookingRequest xmlns="${this.config.namespaces.reservation}">
@@ -198,7 +199,7 @@ export class OwsConnector implements PropertyConnector {
         this.config.soapActions.fetchBooking,
         body,
         "getReservationByReference",
-        reference,
+        correlationId,
       );
     } catch (error) {
       // "Not found" is an answer, not a failure: it means we may safely create.
@@ -251,7 +252,7 @@ export class OwsConnector implements PropertyConnector {
     try {
       // A lookup for a reference that cannot exist: it exercises auth, the
       // endpoint and the envelope without creating anything.
-      await this.getReservationByReference("HEALTHCHECK-000000", this.resortId);
+      await this.getReservationByReference("HEALTHCHECK-000000", this.resortId, "healthcheck");
       return { ok: true, latencyMs: Date.now() - started };
     } catch (error) {
       return {

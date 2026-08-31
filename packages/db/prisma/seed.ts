@@ -414,6 +414,9 @@ async function main() {
     ["media:write", "Upload and manage media"],
     ["users:manage", "Manage staff accounts and roles"],
     ["audit:read", "Read the audit log"],
+    ["bookings:read", "See bookings"],
+    ["bookings:manage", "Retry, attach references, cancel and refund bookings"],
+    ["integrations:manage", "Configure the connection to the property system"],
   ];
   for (const [key, description] of permissions) {
     await db.permission.upsert({ where: { key }, update: {}, create: { key, description } });
@@ -423,23 +426,37 @@ async function main() {
     ["SUPER_ADMIN", "Super admin", "group", permissions.map((p) => p[0])],
     ["GROUP_ADMIN", "Group admin", "group",
       ["content:read", "content:write", "content:publish", "translations:write",
-       "locales:manage", "menus:write", "modules:write", "media:write", "audit:read"]],
+       "locales:manage", "menus:write", "modules:write", "media:write", "audit:read",
+       "bookings:read", "bookings:manage", "integrations:manage"]],
     ["RESORT_ADMIN", "Resort admin", "resort",
-      ["content:read", "content:write", "media:write"]],
+      ["content:read", "content:write", "media:write", "bookings:read", "bookings:manage"]],
     ["CONTENT_MANAGER", "Content manager", "group",
       ["content:read", "content:write", "content:publish", "translations:write",
        "menus:write", "media:write"]],
     ["TRANSLATOR", "Translator", "group", ["content:read", "translations:write"]],
-    ["READ_ONLY", "Read only", "resort", ["content:read"]],
+    ["READ_ONLY", "Read only", "resort", ["content:read", "bookings:read"]],
+    // The reservations desk: bookings and nothing else.
+    ["RESERVATIONS", "Reservations", "resort", ["content:read", "bookings:read", "bookings:manage"]],
   ];
   for (const [key, name, scope, perms] of roles) {
     await db.role.upsert({
-      where: { key }, update: {},
-      create: {
-        key, name, scope,
-        permissions: { create: perms.map((permissionKey) => ({ permissionKey })) },
-      },
+      where: { key },
+      update: { name, scope },
+      create: { key, name, scope },
     });
+    // Reconciled rather than only created. `update: {}` meant a role that
+    // already existed never gained a permission added later, so a new
+    // permission would silently do nothing on every database but a fresh one.
+    await db.rolePermission.deleteMany({
+      where: { roleKey: key, permissionKey: { notIn: perms } },
+    });
+    for (const permissionKey of perms) {
+      await db.rolePermission.upsert({
+        where: { roleKey_permissionKey: { roleKey: key, permissionKey } },
+        update: {},
+        create: { roleKey: key, permissionKey },
+      });
+    }
   }
 
   // ---------- UI strings ----------

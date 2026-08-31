@@ -396,7 +396,17 @@ export type ConfirmOutcome =
  * exists we adopt it. Without this, one network timeout produces two
  * reservations for one guest and the hotel finds out at check-in.
  */
-export async function confirmBooking(bookingId: string): Promise<ConfirmOutcome> {
+export async function confirmBooking(
+  bookingId: string,
+  options: {
+    /**
+     * A person pressed "try again". The automatic attempt budget does not
+     * apply — staff decide when to stop — but every safety check still does,
+     * the lookup above most of all.
+     */
+     manual?: boolean;
+  } = {},
+): Promise<ConfirmOutcome> {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { rooms: true, guest: true },
@@ -410,12 +420,19 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmOutcome>
       confirmationNumber: booking.externalConfirmationNumber ?? undefined,
     };
   }
-  if (booking.status !== "PAID" && booking.status !== "CONFIRMING") {
+  const retryable =
+    booking.status === "PAID" ||
+    booking.status === "CONFIRMING" ||
+    // A person pressing "try again" on a booking sitting in review is the
+    // commonest retry there is. Handled here rather than requiring the caller
+    // to move the status first — the caller that forgets skips the lookup too.
+    (options.manual && booking.status === "NEEDS_MANUAL_REVIEW");
+  if (!retryable) {
     throw new IllegalTransition(booking.status, "CONFIRMING");
   }
 
   const attempt = booking.confirmAttempts + 1;
-  if (booking.status === "PAID") {
+  if (booking.status === "PAID" || booking.status === "NEEDS_MANUAL_REVIEW") {
     await transition({
       bookingId,
       to: "CONFIRMING",
@@ -430,13 +447,24 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmOutcome>
   try {
     connector = await connectorFor(booking.resortId);
   } catch (error) {
-    return scheduleOrReview(booking.id, booking.reference, attempt, String((error as Error).message));
+    return scheduleOrReview(booking.id, booking.reference, attempt, String((error as Error).message), options.manual);
   }
 
   // Look before you leap.
-  if (attempt > 1) {
+  //
+  // Deliberately not keyed on the attempt counter alone. A staff retry from
+  // the admin resets nothing, but if it ever did, keying on the counter would
+  // silently skip this check and create a second reservation — which is how
+  // this exact guard was defeated once already. Anything that has been tried
+  // before, or already carries an external id, gets looked up first.
+  const triedBefore = booking.confirmAttempts > 0 || Boolean(booking.externalReservationId);
+  if (triedBefore) {
     try {
-      const existing = await connector.getReservationByReference(booking.reference, booking.resortId);
+      const existing = await connector.getReservationByReference(
+        booking.reference,
+        booking.resortId,
+        booking.correlationId,
+      );
       if (existing && existing.status === "confirmed") {
         await adopt(bookingId, existing.externalReservationId, existing.externalConfirmationNumber, attempt);
         return {
@@ -448,7 +476,7 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmOutcome>
     } catch {
       // The lookup itself failed. Creating now might duplicate, so we wait
       // rather than risk it — a delayed booking is recoverable, two are not.
-      return scheduleOrReview(bookingId, booking.reference, attempt, "Could not check for an existing reservation.");
+      return scheduleOrReview(bookingId, booking.reference, attempt, "Could not check for an existing reservation.", options.manual);
     }
   }
 
@@ -521,7 +549,7 @@ export async function confirmBooking(bookingId: string): Promise<ConfirmOutcome>
     }
 
     if (error instanceof ConnectorTransportError || error instanceof ConnectorUnavailable) {
-      return scheduleOrReview(bookingId, booking.reference, attempt, error.message);
+      return scheduleOrReview(bookingId, booking.reference, attempt, error.message, options.manual);
     }
     throw error;
   }
@@ -553,8 +581,9 @@ async function scheduleOrReview(
   reference: string,
   attempt: number,
   reason: string,
+  manual = false,
 ): Promise<ConfirmOutcome> {
-  if (attempt >= MAX_ATTEMPTS) {
+  if (!manual && attempt >= MAX_ATTEMPTS) {
     await transition({
       bookingId,
       to: "NEEDS_MANUAL_REVIEW",
@@ -563,6 +592,20 @@ async function scheduleOrReview(
       payload: { attempt, reason },
       data: { nextAttemptAt: null },
     });
+    return { status: "needs_review", reference, reason };
+  }
+
+  if (manual) {
+    // Back to the queue, not onto a schedule. A person is standing there; the
+    // honest answer is "that did not work", not a retry they cannot see.
+    await transition({
+      bookingId,
+      to: "NEEDS_MANUAL_REVIEW",
+      type: "reservation.manual_retry_failed",
+      actorType: "staff",
+      payload: { attempt, reason },
+      data: { nextAttemptAt: null },
+    }).catch(() => undefined);
     return { status: "needs_review", reference, reason };
   }
 

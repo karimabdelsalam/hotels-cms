@@ -34,8 +34,11 @@ const ALLOWED: Record<BookingState, BookingState[]> = {
   PAYMENT_FAILED: ["PENDING_PAYMENT", "EXPIRED"],
   CONFIRMING: ["CONFIRMED", "PENDING_CONFIRMATION", "NEEDS_MANUAL_REVIEW"],
   PENDING_CONFIRMATION: ["CONFIRMED", "NEEDS_MANUAL_REVIEW"],
-  // A booking under review can still be rescued by hand, or refunded.
-  NEEDS_MANUAL_REVIEW: ["CONFIRMED", "CANCELLED", "REFUND_PENDING"],
+  // A booking under review can be retried, rescued by hand, or refunded.
+  // CONFIRMING is here because a staff retry genuinely re-enters confirmation:
+  // without it every caller has to move the status itself first, which is a
+  // trap, and the one caller that forgets skips the safety checks with it.
+  NEEDS_MANUAL_REVIEW: ["CONFIRMING", "CONFIRMED", "CANCELLED", "REFUND_PENDING"],
   CONFIRMED: ["MODIFIED", "CANCELLED", "COMPLETED", "NO_SHOW"],
   MODIFIED: ["CONFIRMED", "CANCELLED"],
   CANCELLED: ["REFUND_PENDING"],

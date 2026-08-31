@@ -23,6 +23,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.122.0
         version: 0.122.0(zod@3.25.76)
+      '@fantazia/booking':
+        specifier: workspace:*
+        version: link:../../packages/booking
       '@fantazia/db':
         specifier: workspace:*
         version: link:../../packages/db

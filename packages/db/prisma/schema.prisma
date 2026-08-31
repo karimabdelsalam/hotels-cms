@@ -1172,3 +1172,27 @@ model IntegrationLog {
   @@index([status, createdAt])
   @@map("integration_logs")
 }
+
+/// Reservations the simulator has "created".
+///
+/// In the database rather than in memory on purpose: a simulator that forgets
+/// when the process restarts, or that keeps separate memories in the web
+/// server and a worker, cannot stand in for an external system. In particular
+/// it could not exercise the case this whole design exists for — a reservation
+/// that already exists when the retry comes back.
+///
+/// Only ever written by the simulator connector. On a production environment
+/// running against real OPERA this table stays empty.
+model SimulatorReservation {
+  reference          String   @id
+  resortId           String
+  externalReservationId String @unique
+  confirmationNumber String
+  status             String   @default("confirmed")
+  checkIn            String
+  checkOut           String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("simulator_reservations")
+}

@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.122.0",
     "@fantazia/db": "workspace:*",
     "@fantazia/media": "workspace:*",
+    "@fantazia/booking": "workspace:*",
     "@node-rs/argon2": "^2.0.2",
     "@types/qrcode": "^1.5.6",
     "jose": "^5.9.6",

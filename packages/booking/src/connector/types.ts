@@ -169,8 +169,17 @@ export interface PropertyConnector {
   getAvailability(q: AvailabilityQuery): Promise<AvailabilityResult>;
   quote(q: QuoteRequest): Promise<Quote>;
   createReservation(r: ReservationRequest): Promise<ReservationRef>;
-  /** Looked up by OUR reference — this is what makes a lost response recoverable. */
-  getReservationByReference(reference: string, resortId: string): Promise<ReservationDetail | null>;
+  /**
+   * Looked up by OUR reference — this is what makes a lost response
+   * recoverable. Takes the correlation id so the call lands on the booking's
+   * own trail: it is the single call that proves a duplicate was avoided, and
+   * it is useless if an investigator cannot find it.
+   */
+  getReservationByReference(
+    reference: string,
+    resortId: string,
+    correlationId: string,
+  ): Promise<ReservationDetail | null>;
   cancelReservation(r: CancelRequest): Promise<CancellationRef>;
   healthCheck(): Promise<ConnectorHealth>;
 }
