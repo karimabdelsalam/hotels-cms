@@ -101,6 +101,19 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  packages/booking:
+    dependencies:
+      '@fantazia/db':
+        specifier: workspace:*
+        version: link:../db
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.1
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/db:
     dependencies:
       '@prisma/client':

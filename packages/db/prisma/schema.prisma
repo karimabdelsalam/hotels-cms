@@ -45,6 +45,10 @@ model Locale {
   menuItemTrans        MenuItemTranslation[]
 
   @@index([isEnabled, displayOrder])
+
+  cancellationPolicyTranslations CancellationPolicyTranslation[]
+  ratePlanTranslations           RatePlanTranslation[]
+
   @@map("locales")
 }
 
@@ -232,6 +236,15 @@ model Resort {
   menuItems    MenuItem[]
 
   @@index([destinationId, status])
+
+  integration        ResortIntegration?
+  cancellationPolicies CancellationPolicy[]
+  ratePlans          RatePlan[]
+  inventorySnapshots InventorySnapshot[]
+  bookingHolds       BookingHold[]
+  bookings           Booking[]
+  integrationLogs    IntegrationLog[]
+
   @@map("resorts")
 }
 
@@ -295,6 +308,11 @@ model RoomType {
 
   @@unique([resortId, externalCode])
   @@index([resortId, active])
+
+  ratePlans          RatePlanRoomType[]
+  inventorySnapshots InventorySnapshot[]
+  bookingRooms       BookingRoom[]
+
   @@map("room_types")
 }
 
@@ -724,4 +742,433 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/* ==================================================================== *
+ * Booking
+ *
+ * Everything below exists to make one state impossible to reach
+ * silently: money taken and no reservation created. See
+ * docs/booking-lifecycle.md — this is that document in tables.
+ * ==================================================================== */
+
+/// The shared connection to OPERA.
+///
+/// One row serves all three resorts: they are one multi-property OPERA
+/// installation reached through one channel-manager account, so endpoint,
+/// credentials and connection health belong here rather than being copied
+/// three times. Breaker state lives here too, because an outage on this
+/// connection takes every property at once.
+model IntegrationEnvironment {
+  id              String  @id @default(cuid())
+  name            String
+  /// ows | oxi | channel_manager | simulator
+  integrationType String
+  endpoint        String
+  chainCode       String?
+  /// production | test
+  environment     String  @default("test")
+  /// A pointer into the secret store. NEVER the credential itself.
+  credentialRef   String
+  enabled         Boolean @default(false)
+
+  /// closed | open | half_open — the circuit breaker.
+  circuitState     String    @default("closed")
+  openedAt         DateTime?
+  consecutiveFails Int       @default(0)
+  lastErrorAt      DateTime?
+  lastErrorSummary String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  integrations ResortIntegration[]
+
+  @@map("integration_environments")
+}
+
+/// What is genuinely per property: the OPERA resort code, the capability
+/// flags, and the sync state. `operaResortCode` is the key that lets one
+/// connection serve three resorts.
+model ResortIntegration {
+  id            String @id @default(cuid())
+  resortId      String @unique
+  environmentId String
+
+  /// The OPERA resort code. Without it nothing can be routed to a property.
+  operaResortCode String?
+
+  /// Capability flags read by the UI, so no code anywhere asks
+  /// "is this resort on OPERA?". Shape: ConnectorCapabilities.
+  capabilities Json
+
+  enabled     Boolean   @default(false)
+  /// live | snapshot — where availability is read from.
+  bookingMode String    @default("snapshot")
+  lastSyncAt  DateTime?
+  syncStatus  String    @default("never")
+  lastErrorAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resort      Resort                 @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  environment IntegrationEnvironment @relation(fields: [environmentId], references: [id], onDelete: Restrict)
+
+  @@map("resort_integrations")
+}
+
+model CancellationPolicy {
+  id       String @id @default(cuid())
+  resortId String
+  /// free_until | non_refundable | partial | custom
+  type     String
+  freeUntilDays Int?
+  freeUntilTime String? // "18:00" local to the property
+  /// percentage | nights | fixed
+  penaltyType   String?
+  penaltyValue  Int?
+
+  resort       Resort                          @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  translations CancellationPolicyTranslation[]
+  ratePlans    RatePlan[]
+
+  @@map("cancellation_policies")
+}
+
+model CancellationPolicyTranslation {
+  id         String @id @default(cuid())
+  policyId   String
+  localeCode String @db.VarChar(12)
+  /// The sentence the guest reads at checkout. Written, not generated: a
+  /// policy summarised by code is a policy nobody can be held to.
+  summary    String
+
+  policy CancellationPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  locale Locale             @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([policyId, localeCode])
+  @@map("cancellation_policy_translations")
+}
+
+model RatePlan {
+  id           String  @id @default(cuid())
+  resortId     String
+  externalCode String? // the OPERA rate code, nullable until mapping is done
+  /// room_only | bed_and_breakfast | half_board | full_board | all_inclusive
+  mealPlan     String  @default("bed_and_breakfast")
+  policyId     String?
+  minStay      Int?
+  maxStay      Int?
+  advanceDays  Int?
+  /// false covers corporate and negotiated rates, reachable only by code.
+  isPublic     Boolean @default(true)
+  active       Boolean @default(true)
+  displayOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resort       Resort                @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  policy       CancellationPolicy?   @relation(fields: [policyId], references: [id], onDelete: SetNull)
+  translations RatePlanTranslation[]
+  roomTypes    RatePlanRoomType[]
+  snapshots    InventorySnapshot[]
+  bookingRooms BookingRoom[]
+
+  @@unique([resortId, externalCode])
+  @@index([resortId, active])
+  @@map("rate_plans")
+}
+
+model RatePlanTranslation {
+  id          String  @id @default(cuid())
+  ratePlanId  String
+  localeCode  String  @db.VarChar(12)
+  name        String
+  description String?
+
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  locale   Locale   @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([ratePlanId, localeCode])
+  @@map("rate_plan_translations")
+}
+
+model RatePlanRoomType {
+  ratePlanId String
+  roomTypeId String
+
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@id([ratePlanId, roomTypeId])
+  @@map("rate_plan_room_types")
+}
+
+/// Availability and rates pushed to us by OXI, one row per night.
+///
+/// This table is doing more work than it looks. It makes group-wide search
+/// fast, and it keeps the site searchable when OPERA or the channel manager
+/// is down — with one installation behind all three resorts, reading live
+/// would take the whole group offline together. Only creating a reservation
+/// needs the connection up.
+model InventorySnapshot {
+  id             String   @id @default(cuid())
+  resortId       String
+  roomTypeId     String
+  ratePlanId     String
+  date           DateTime @db.Date
+  availableCount Int
+  rateMinor      Int
+  currency       String   @db.VarChar(3)
+  /// { minStay, maxStay, closedToArrival, closedToDeparture, stopSell }
+  restrictions   Json?
+  /// oxi | manual | simulator — how this row got here.
+  source         String   @default("oxi")
+  syncedAt       DateTime @default(now())
+
+  resort   Resort   @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@unique([resortId, roomTypeId, ratePlanId, date])
+  @@index([resortId, date])
+  @@index([date, availableCount])
+  @@map("inventory_snapshots")
+}
+
+model Guest {
+  id        String  @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+  country   String? @db.VarChar(2)
+  locale    String  @db.VarChar(12)
+  marketingConsent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  /// Not unique: the same address may book without an account, and forcing
+  /// uniqueness here would merge two people who share a family inbox.
+  @@index([email])
+  @@map("guests")
+}
+
+/// Our own guard against stale prices and double submission.
+///
+/// Not an inventory hold in the property's system unless the connector
+/// supports one — it holds the quote, not the room.
+model BookingHold {
+  id        String   @id @default(cuid())
+  resortId  String
+  sessionId String
+  /// The rooms, dates and occupancy this hold covers.
+  payload   Json
+  /// The itemised price as quoted. What the guest is shown must be what the
+  /// guest pays, and this is the record of what that was.
+  quote     Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  resort  Resort   @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  booking Booking?
+
+  @@index([expiresAt])
+  @@index([sessionId])
+  @@map("booking_holds")
+}
+
+model Booking {
+  id        String @id @default(cuid())
+  /// Our human-facing code, e.g. FNT-8F3K2P. Generated by us and stable.
+  reference String @unique
+  resortId  String
+  guestId   String
+  holdId    String? @unique
+
+  /// See docs/booking-lifecycle.md §1.
+  status String @default("DRAFT")
+
+  /// The channel manager's or OWS's id, returned in the creating call.
+  externalReservationId String?
+  /// OPERA's own confirmation number. On the OWS path it arrives in the same
+  /// call; on an asynchronous path it lands later. Both are stored verbatim
+  /// and never regenerated.
+  externalConfirmationNumber String?
+
+  checkIn    DateTime @db.Date
+  checkOut   DateTime @db.Date
+  nights     Int
+  adults     Int
+  children   Int      @default(0)
+  childAges  Int[]
+  roomsCount Int      @default(1)
+
+  currency    String @db.VarChar(3)
+  roomTotal   Int
+  taxesTotal  Int    @default(0)
+  feesTotal   Int    @default(0)
+  totalAmount Int
+
+  paymentStatus   String  @default("none")
+  source          String  @default("web")
+  locale          String  @db.VarChar(12)
+  promoCode       String?
+  offerId         String?
+  specialRequests String?
+
+  /// Threads every log line, connector call, payment event and queue job for
+  /// this booking attempt. Given one reference, the whole story is
+  /// reconstructable from logs alone.
+  correlationId String
+
+  /// How many times reservation creation has been attempted, and when it may
+  /// next be tried. Kept on the row so a restart does not lose the schedule.
+  confirmAttempts Int       @default(0)
+  nextAttemptAt   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+
+  resort   Resort         @relation(fields: [resortId], references: [id], onDelete: Restrict)
+  guest    Guest          @relation(fields: [guestId], references: [id], onDelete: Restrict)
+  hold     BookingHold?   @relation(fields: [holdId], references: [id], onDelete: SetNull)
+  rooms    BookingRoom[]
+  payments Payment[]
+  events   BookingEvent[]
+
+  @@index([resortId, checkIn])
+  @@index([status, createdAt])
+  @@index([status, nextAttemptAt])
+  @@map("bookings")
+}
+
+model BookingRoom {
+  id         String @id @default(cuid())
+  bookingId  String
+  roomTypeId String
+  ratePlanId String
+
+  adults    Int
+  children  Int   @default(0)
+  childAges Int[]
+  quantity  Int   @default(1)
+
+  /// A per-date breakdown, not one number. Without it a modification or a
+  /// partial refund six weeks later cannot be priced, and a dispute cannot be
+  /// answered.
+  nightlyRates Json
+  roomTotal    Int
+  guestName    String?
+  externalLineId String?
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  ratePlan RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Restrict)
+
+  @@index([bookingId])
+  @@map("booking_rooms")
+}
+
+/// Append-only. Every transition lands here.
+///
+/// This is what makes a payment/reservation inconsistency investigable at
+/// 2am, and it is the trail finance will ask for.
+model BookingEvent {
+  id         String  @id @default(cuid())
+  bookingId  String
+  type       String
+  fromStatus String?
+  toStatus   String?
+  /// guest | system | staff | provider
+  actorType  String
+  actorId    String?
+  payload    Json?
+  correlationId String
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@map("booking_events")
+}
+
+model Payment {
+  id                String  @id @default(cuid())
+  bookingId         String
+  provider          String
+  providerPaymentId String?
+  idempotencyKey    String  @unique
+
+  amount   Int
+  currency String @db.VarChar(3)
+  status   String @default("INITIATED")
+  method   String?
+  /// Last four digits only. No raw card data is ever stored, anywhere.
+  last4    String? @db.VarChar(4)
+  /// Redacted at write time, for reconciliation only.
+  rawResponse Json?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  capturedAt DateTime?
+  refundedAt DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([providerPaymentId])
+  @@map("payments")
+}
+
+/// Guards payment creation, reservation creation and webhook processing
+/// against double-clicks, refreshes, retries and duplicate deliveries.
+///
+/// The first response for a key is stored and replayed for repeats. No retry
+/// may ever create a second charge or a second reservation.
+model IdempotencyKey {
+  key         String   @id
+  scope       String
+  requestHash String
+  response    Json?
+  status      String   @default("in_progress")
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+/// Summaries only, credentials redacted at write time.
+///
+/// Surfaced in admin so the reservations team can see what failed without
+/// ever seeing a secret.
+model IntegrationLog {
+  id            String  @id @default(cuid())
+  resortId      String?
+  connector     String
+  operation     String
+  correlationId String
+  requestSummary  Json?
+  responseSummary Json?
+  status        String
+  durationMs    Int?
+  errorCode     String?
+
+  createdAt DateTime @default(now())
+
+  resort Resort? @relation(fields: [resortId], references: [id], onDelete: SetNull)
+
+  @@index([correlationId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@map("integration_logs")
 }
