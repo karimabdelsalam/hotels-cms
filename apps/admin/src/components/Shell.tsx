@@ -16,6 +16,9 @@ type ActorView = {
 const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/", label: "Dashboard" },
   { href: "/resorts", label: "Resorts", permission: "content:read" },
+  { href: "/offers", label: "Offers", permission: "content:read" },
+  { href: "/experiences", label: "Experiences", permission: "content:read" },
+  { href: "/pages", label: "Pages", permission: "content:read" },
   { href: "/modules", label: "Site sections", permission: "modules:write" },
   { href: "/menus", label: "Menus", permission: "menus:write" },
   { href: "/users", label: "Staff", permission: "users:manage" },

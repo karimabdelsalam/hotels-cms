@@ -16,8 +16,8 @@ assumes them.
 
 Working today: the full public site — bilingual routing with RTL, database-driven
 navigation, resorts, experiences, offers, diving, weddings, content pages, and SEO — plus
-the admin portal with sign-in, role-based access, per-language content editing, and the
-site-section switches.
+the admin portal with sign-in, role-based access, and editors for resorts, offers,
+experiences, and block-composed content pages, all translated per language.
 
 ## Running it
 
