@@ -2,9 +2,10 @@
 
 > **Standing it up on a subdomain first?** See
 > [`deploy-subdomain.md`](./deploy-subdomain.md). That is the one you want
-> before launch: the platform running at `demo.fantaziaresorts.com` beside the
+> before launch: the platform running at `ihotel.planova.com.eg` beside the
 > live site, with nothing at risk. This document covers taking over a main
 > domain, which is the step after.
+> An Arabic version of that guide is at [`التشغيل-على-نطاق-فرعي.md`](./التشغيل-على-نطاق-فرعي.md).
 
 
 Written for the confirmed environment: **your own VPS, root access, WHM and

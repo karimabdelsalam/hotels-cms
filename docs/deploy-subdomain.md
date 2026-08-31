@@ -1,5 +1,7 @@
 # Running on a subdomain, beside the live site
 
+> **بالعربي:** نفس الخطوات بالتفصيل في [`التشغيل-على-نطاق-فرعي.md`](./التشغيل-على-نطاق-فرعي.md).
+
 Written for **`ihotel.planova.com.eg`**, which is where this is going first.
 Substitute your own hostnames if that changes; nothing below depends on the
 names themselves.
