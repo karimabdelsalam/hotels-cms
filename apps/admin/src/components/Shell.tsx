@@ -26,6 +26,7 @@ const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/translations", label: "Translations", permission: "content:read" },
   { href: "/modules", label: "Site sections", permission: "modules:write" },
   { href: "/menus", label: "Menus", permission: "content:read" },
+  { href: "/integrations", label: "Property system", permission: "integrations:manage" },
   { href: "/users", label: "Staff", permission: "users:manage" },
   { href: "/settings", label: "Settings", permission: "content:read" },
   { href: "/audit", label: "Audit log", permission: "audit:read" },
