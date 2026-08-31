@@ -305,3 +305,9 @@ button.stat { text-align: start; cursor: pointer; font-family: inherit; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .import-preview { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--line);
   padding-top: 14px; }
+
+/* ---------- ai translation ---------- */
+.chip--lock { background: var(--foam); color: var(--sea-dark); }
+.suggestion { background: var(--foam); border: 1px solid rgba(7,135,163,.22);
+  border-radius: 9px; padding: 11px 13px; display: flex; flex-direction: column; gap: 8px; }
+.suggestion p { font-size: .9375rem; color: var(--ink); }

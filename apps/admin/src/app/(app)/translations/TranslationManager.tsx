@@ -9,6 +9,8 @@ import {
   exportTranslations,
   previewImport,
   commitImport,
+  autoTranslateLocale,
+  suggestTranslation,
 } from "./actions";
 
 type LocaleView = {
@@ -24,6 +26,8 @@ type Row = {
   key: string;
   value: string;
   status: string;
+  humanEdited: boolean;
+  machineModel: string | null;
   source: string;
 };
 type Completeness = {
@@ -51,6 +55,7 @@ export function TranslationManager({
   namespaces,
   filters,
   rows,
+  aiConfigured,
   canWrite,
   canPublish,
 }: {
@@ -60,6 +65,7 @@ export function TranslationManager({
   namespaces: { name: string; count: number }[];
   filters: { namespace: string; status: string; q: string };
   rows: Row[];
+  aiConfigured: boolean;
   canWrite: boolean;
   canPublish: boolean;
 }) {
@@ -184,7 +190,14 @@ export function TranslationManager({
         ) : (
           <div className="strings">
             {rows.map((row) => (
-              <StringRow key={row.id} row={row} rtl={rtl} locale={active} canWrite={canWrite} />
+              <StringRow
+              key={row.id}
+              row={row}
+              rtl={rtl}
+              locale={active}
+              canWrite={canWrite}
+              aiConfigured={aiConfigured}
+            />
             ))}
           </div>
         )}
@@ -192,6 +205,14 @@ export function TranslationManager({
           <p className="note">Showing the first 400. Narrow the filters to see the rest.</p>
         )}
       </section>
+
+      {canWrite && !locale?.isDefault && (
+        <AutoTranslatePanel
+          locale={active}
+          nativeName={locale?.nativeName ?? active}
+          configured={aiConfigured}
+        />
+      )}
 
       {canWrite && !locale?.isDefault && (
         <TransferPanel locale={active} nativeName={locale?.nativeName ?? active} />
@@ -213,15 +234,21 @@ function StringRow({
   rtl,
   locale,
   canWrite,
+  aiConfigured,
 }: {
   row: Row;
   rtl: boolean;
   locale: string;
   canWrite: boolean;
+  aiConfigured: boolean;
 }) {
   const [value, setValue] = useState(row.value);
   const [status, setStatus] = useState(row.status);
+  const [humanEdited, setHumanEdited] = useState(row.humanEdited);
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
 
   const commit = async () => {
     if (value === row.value) return;
@@ -229,6 +256,7 @@ function StringRow({
     try {
       const result = await saveString(row.id, value);
       setStatus(result.status);
+      setHumanEdited(true);
       setSaving("saved");
       setTimeout(() => setSaving("idle"), 1500);
     } catch {
@@ -243,6 +271,14 @@ function StringRow({
           {row.namespace}.{row.key}
         </code>
         <span className={`chip chip--${chipFor(status)}`}>{STATUS_LABEL[status] ?? status}</span>
+        {humanEdited && (
+          <span className="chip chip--lock" title="Edited by a person — automatic translation will not touch it">
+            Yours
+          </span>
+        )}
+        {status === "machine" && row.machineModel && (
+          <span className="hint">by {row.machineModel}</span>
+        )}
       </div>
       <p className="string-source" dir="ltr">
         {row.source}
@@ -258,10 +294,54 @@ function StringRow({
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
       />
+      {suggestion !== null && (
+        <div className="suggestion">
+          <span className="picker-label">Suggested</span>
+          <p dir={rtl ? "rtl" : "ltr"} lang={locale}>
+            {suggestion}
+          </p>
+          <div className="btn-row">
+            <button
+              type="button"
+              className="btn btn--sm"
+              onClick={() => {
+                setValue(suggestion);
+                setSuggestion(null);
+              }}
+            >
+              Use it
+            </button>
+            <button type="button" className="btn btn--sm" onClick={() => setSuggestion(null)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="string-foot">
         {saving === "saving" && <span className="hint">Saving…</span>}
         {saving === "saved" && <span className="ok">Saved</span>}
         {saving === "error" && <span className="err">Could not save</span>}
+        {suggestError && <span className="err">{suggestError}</span>}
+
+        {canWrite && aiConfigured && suggestion === null && (
+          <button
+            type="button"
+            className="btn btn--sm"
+            disabled={suggesting}
+            onClick={async () => {
+              setSuggesting(true);
+              setSuggestError(null);
+              const result = await suggestTranslation(row.id);
+              setSuggesting(false);
+              if (result.ok) setSuggestion(result.value);
+              else setSuggestError(result.error);
+            }}
+          >
+            {suggesting ? "Thinking…" : "Suggest"}
+          </button>
+        )}
+
         {status === "machine" && canWrite && (
           <button
             type="button"
@@ -269,9 +349,10 @@ function StringRow({
             onClick={async () => {
               await markReviewed(row.id);
               setStatus(value.trim() ? "translated" : "missing");
+              setHumanEdited(true);
             }}
           >
-            Mark reviewed
+            Approve
           </button>
         )}
       </div>
@@ -425,6 +506,92 @@ function TransferPanel({ locale, nativeName }: { locale: string; nativeName: str
             </>
           )}
         </div>
+      )}
+    </section>
+  );
+}
+
+
+function AutoTranslatePanel({
+  locale,
+  nativeName,
+  configured,
+}: {
+  locale: string;
+  nativeName: string;
+  configured: boolean;
+}) {
+  const [pending, start] = useTransition();
+  const [result, setResult] = useState<{
+    ok: boolean;
+    message: string;
+    rejected: { path: string; reason: string }[];
+  } | null>(null);
+
+  const run = (scope: "missing" | "missing_and_stale") =>
+    start(async () => {
+      setResult(null);
+      const outcome = await autoTranslateLocale(locale, scope);
+      setResult({ ok: outcome.ok, message: outcome.message, rejected: outcome.rejected });
+    });
+
+  return (
+    <section className="card">
+      <h2>Translate with AI</h2>
+      <p className="note">
+        Fills {nativeName} from the English source. Output is marked as machine work and
+        counts as unreviewed until someone approves it — it is a first draft, not something
+        the site quietly starts saying. The second button also picks up strings whose English
+        has changed since they were translated, so editing the English re-translates the rest.
+      </p>
+      <p className="note">
+        <b>Anything you have edited by hand is never touched</b>, whatever state it is in. A
+        string becomes yours the moment you save it, and stays yours until you change it again.
+      </p>
+
+      {!configured ? (
+        <p className="err">
+          Not configured. Set <code>ANTHROPIC_API_KEY</code> on the server to enable this.
+        </p>
+      ) : (
+        <div className="btn-row">
+          <button type="button" className="btn btn--pri" disabled={pending} onClick={() => run("missing")}>
+            {pending ? "Translating…" : "Translate what is missing"}
+          </button>
+          <button type="button" className="btn" disabled={pending} onClick={() => run("missing_and_stale")}>
+            Also redo drafts and strings whose English changed
+          </button>
+        </div>
+      )}
+
+      {result && (
+        <>
+          <p className={result.ok ? "ok" : "err"} role="status">
+            {result.message}
+          </p>
+          {result.rejected.length > 0 && (
+            <div className="scroller" style={{ maxHeight: 220 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Why it was rejected</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.rejected.map((r) => (
+                    <tr key={r.path}>
+                      <td>
+                        <code>{r.path}</code>
+                      </td>
+                      <td>{r.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

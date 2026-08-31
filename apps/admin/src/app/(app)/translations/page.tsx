@@ -1,6 +1,7 @@
 import { prisma } from "@fantazia/db";
 import { getCompleteness } from "@fantazia/db/i18n";
 import { requirePermission } from "@/server/auth";
+import { isConfigured } from "@/server/translate";
 import { PageHeader } from "@/components/PageHeader";
 import { TranslationManager } from "./TranslationManager";
 
@@ -79,8 +80,11 @@ export default async function TranslationsPage({
           key: r.key,
           value: r.value,
           status: r.status,
+          humanEdited: r.humanEdited,
+          machineModel: r.machineModel,
           source: sourceFor(r.namespace, r.key),
         }))}
+        aiConfigured={isConfigured()}
         canWrite={actor.permissions.has("translations:write")}
         canPublish={actor.permissions.has("content:publish")}
       />

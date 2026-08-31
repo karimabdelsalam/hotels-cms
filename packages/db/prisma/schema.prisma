@@ -57,12 +57,24 @@ model TranslationString {
   value      String
   status     String  @default("missing") // missing | machine | draft | translated | needs_review
   sourceHash String? // hash of the English value this was translated from — drift detection
+
+  /// Set the moment a person saves this string. Automatic translation never
+  /// touches a row where this is true, whatever its status — a human edit is
+  /// permanent until a human changes it again.
+  humanEdited  Boolean   @default(false)
+  editedById   String?
+  /// Provenance for machine output, so it is always clear what wrote a string.
+  machineModel String?
+  machineAt    DateTime?
+
   updatedAt  DateTime @updatedAt
 
   locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+  editedBy User? @relation(fields: [editedById], references: [id], onDelete: SetNull)
 
   @@unique([namespace, key, localeCode])
   @@index([localeCode, status])
+  @@index([localeCode, humanEdited])
   @@map("translation_strings")
 }
 
@@ -603,6 +615,7 @@ model User {
   resortAccess UserResortAccess[]
   auditEntries AuditLog[]
   uploads      MediaAsset[]
+  translations TranslationString[]
 
   @@map("users")
 }

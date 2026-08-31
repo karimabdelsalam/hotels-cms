@@ -13,3 +13,6 @@ coverage/
 .idea/
 .vscode/
 .media/
+
+# TypeScript incremental build state
+*.tsbuildinfo

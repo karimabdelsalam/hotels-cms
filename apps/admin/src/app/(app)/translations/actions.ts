@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@fantazia/db";
 import { requirePermissionForAction } from "@/server/auth";
+import {
+  translateBatch,
+  isConfigured,
+  TranslationUnavailable,
+  TRANSLATION_MODEL,
+} from "@/server/translate";
 import { revalidatePublicSite } from "@/server/revalidate";
 import { audit } from "@/server/audit";
 
@@ -29,6 +35,10 @@ export async function saveString(id: string, value: string) {
     data: {
       value: d.value,
       status: d.value.trim() ? "translated" : "missing",
+      // The moment a person touches a string it becomes theirs. Automatic
+      // translation skips it from here on, whatever its status becomes later.
+      humanEdited: true,
+      editedById: actor.id,
     },
   });
 
@@ -279,4 +289,225 @@ function parseCsv(text: string): string[][] {
     rows.push(row);
   }
   return rows;
+}
+
+
+/* ------------------------------------------------------------------ *
+ * Automatic translation
+ * ------------------------------------------------------------------ */
+
+export type AutoTranslateResult = {
+  ok: boolean;
+  translated: number;
+  skippedHumanEdited: number;
+  rejected: { path: string; reason: string }[];
+  message: string;
+};
+
+const BATCH_SIZE = 40;
+
+/**
+ * Fill a language from English.
+ *
+ * What it will touch: strings that are missing, unreviewed machine output, and
+ * strings the English has since changed under (`needs_review`, set by
+ * `syncTranslationKeys` when the source hash drifts) — that last case is what
+ * makes editing the English actually re-translate the rest.
+ *
+ * What it will never touch: anything a person has edited. That is a column on
+ * the row, not an inference from status, so it holds however the status changes
+ * later — including when the English drifts under a hand-written translation.
+ * Such a string is flagged for review in the table and left for a person; it is
+ * never quietly rewritten.
+ */
+export async function autoTranslateLocale(
+  localeCode: string,
+  scope: "missing" | "missing_and_stale",
+): Promise<AutoTranslateResult> {
+  const actor = await requirePermissionForAction("translations:write");
+
+  if (!isConfigured()) {
+    return {
+      ok: false,
+      translated: 0,
+      skippedHumanEdited: 0,
+      rejected: [],
+      message: "Automatic translation is not configured. Set ANTHROPIC_API_KEY to enable it.",
+    };
+  }
+
+  const locale = await prisma.locale.findUnique({ where: { code: localeCode } });
+  if (!locale) {
+    return { ok: false, translated: 0, skippedHumanEdited: 0, rejected: [], message: "No such language." };
+  }
+  if (locale.isDefault) {
+    return {
+      ok: false,
+      translated: 0,
+      skippedHumanEdited: 0,
+      rejected: [],
+      message: "English is the source language — there is nothing to translate into it.",
+    };
+  }
+
+  const statuses = scope === "missing" ? ["missing"] : ["missing", "machine", "needs_review"];
+
+  // How many were left alone because someone had edited them. Reported rather
+  // than hidden, so the count always adds up for whoever pressed the button.
+  const skippedHumanEdited = await prisma.translationString.count({
+    where: { localeCode, status: { in: statuses }, humanEdited: true },
+  });
+
+  const candidates = await prisma.translationString.findMany({
+    where: { localeCode, status: { in: statuses }, humanEdited: false },
+    orderBy: [{ namespace: "asc" }, { key: "asc" }],
+  });
+
+  if (candidates.length === 0) {
+    return {
+      ok: true,
+      translated: 0,
+      skippedHumanEdited,
+      rejected: [],
+      message:
+        skippedHumanEdited > 0
+          ? `Nothing to translate. ${skippedHumanEdited} string${skippedHumanEdited === 1 ? " was" : "s were"} left alone because ${skippedHumanEdited === 1 ? "it has" : "they have"} been edited by hand.`
+          : "Nothing to translate — this language is already filled in.",
+    };
+  }
+
+  const english = await prisma.translationString.findMany({
+    where: { localeCode: "en", status: { not: "removed" } },
+    select: { namespace: true, key: true, value: true },
+  });
+  const sourceFor = (namespace: string, key: string) =>
+    english.find((e) => e.namespace === namespace && e.key === key)?.value ?? "";
+
+  let translated = 0;
+  const rejected: { path: string; reason: string }[] = [];
+
+  for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
+    const slice = candidates.slice(i, i + BATCH_SIZE);
+    const items = slice
+      .map((row) => ({
+        row,
+        path: `${row.namespace}.${row.key}`,
+        source: sourceFor(row.namespace, row.key),
+      }))
+      .filter((item) => item.source.trim());
+
+    if (items.length === 0) continue;
+
+    let results;
+    try {
+      results = await translateBatch(
+        localeCode,
+        locale.nativeName,
+        items.map(({ path, source }) => ({ path, source })),
+      );
+    } catch (error) {
+      const message =
+        error instanceof TranslationUnavailable
+          ? error.message
+          : "The translation service could not be reached. Nothing was changed by this batch.";
+      return {
+        ok: false,
+        translated,
+        skippedHumanEdited,
+        rejected,
+        message: `${message}${translated > 0 ? ` ${translated} string${translated === 1 ? "" : "s"} saved before the failure.` : ""}`,
+      };
+    }
+
+    for (const result of results) {
+      const item = items.find((x) => x.path === result.path);
+      if (!item) continue;
+
+      if (!result.ok) {
+        rejected.push({ path: result.path, reason: result.reason });
+        continue;
+      }
+
+      // Re-check immediately before writing: a person may have edited this
+      // string while the batch was in flight, and they win.
+      const current = await prisma.translationString.findUnique({ where: { id: item.row.id } });
+      if (!current || current.humanEdited) continue;
+
+      await prisma.translationString.update({
+        where: { id: item.row.id },
+        data: {
+          value: result.value,
+          status: "machine",
+          machineModel: TRANSLATION_MODEL,
+          machineAt: new Date(),
+        },
+      });
+      translated += 1;
+    }
+  }
+
+  await audit(actor, "translation.auto", "TranslationString", localeCode, null, {
+    locale: localeCode,
+    translated,
+    skippedHumanEdited,
+    rejected: rejected.length,
+    model: TRANSLATION_MODEL,
+  });
+  revalidatePath("/translations");
+
+  const parts = [`${translated} string${translated === 1 ? "" : "s"} translated and marked for review`];
+  if (skippedHumanEdited > 0) {
+    parts.push(`${skippedHumanEdited} left alone because ${skippedHumanEdited === 1 ? "it has" : "they have"} been edited by hand`);
+  }
+  if (rejected.length > 0) {
+    parts.push(`${rejected.length} rejected`);
+  }
+
+  return { ok: true, translated, skippedHumanEdited, rejected, message: `${parts.join(", ")}.` };
+}
+
+/** A suggestion for one string. Never written — the editor accepts or ignores it. */
+export async function suggestTranslation(id: string) {
+  await requirePermissionForAction("translations:write");
+
+  if (!isConfigured()) {
+    return { ok: false as const, error: "Automatic translation is not configured." };
+  }
+
+  const row = await prisma.translationString.findUnique({ where: { id } });
+  if (!row) return { ok: false as const, error: "That string no longer exists." };
+
+  const [locale, source] = await Promise.all([
+    prisma.locale.findUnique({ where: { code: row.localeCode } }),
+    prisma.translationString.findUnique({
+      where: {
+        namespace_key_localeCode: {
+          namespace: row.namespace,
+          key: row.key,
+          localeCode: "en",
+        },
+      },
+    }),
+  ]);
+  if (!locale || !source?.value.trim()) {
+    return { ok: false as const, error: "There is no English source for that string." };
+  }
+
+  try {
+    const [result] = await translateBatch(locale.code, locale.nativeName, [
+      { path: `${row.namespace}.${row.key}`, source: source.value },
+    ]);
+    if (!result || !result.ok) {
+      return { ok: false as const, error: result?.reason ?? "No suggestion was returned." };
+    }
+    return { ok: true as const, value: result.value };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error:
+        error instanceof TranslationUnavailable
+          ? error.message
+          : "The translation service could not be reached.",
+    };
+  }
 }
