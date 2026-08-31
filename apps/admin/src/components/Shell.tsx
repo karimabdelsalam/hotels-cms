@@ -22,6 +22,7 @@ const NAV: { href: string; label: string; permission?: string }[] = [
   { href: "/experiences", label: "Experiences", permission: "content:read" },
   { href: "/pages", label: "Pages", permission: "content:read" },
   { href: "/media", label: "Media", permission: "content:read" },
+  { href: "/translations", label: "Translations", permission: "content:read" },
   { href: "/modules", label: "Site sections", permission: "modules:write" },
   { href: "/menus", label: "Menus", permission: "menus:write" },
   { href: "/users", label: "Staff", permission: "users:manage" },

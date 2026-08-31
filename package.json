@@ -16,7 +16,8 @@
     "db:reset": "pnpm --filter @fantazia/db reset",
     "db:studio": "pnpm --filter @fantazia/db studio",
     "db:migrate": "pnpm --filter @fantazia/db migrate",
-    "db:deploy": "pnpm --filter @fantazia/db migrate:deploy"
+    "db:deploy": "pnpm --filter @fantazia/db migrate:deploy",
+    "db:sync-strings": "pnpm --filter @fantazia/db sync:strings"
   },
   "devDependencies": {
     "turbo": "^2.5.5",

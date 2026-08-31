@@ -6,7 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./content": "./src/content.ts"
+    "./content": "./src/content.ts",
+    "./i18n": "./src/i18n.ts"
   },
   "scripts": {
     "generate": "prisma generate",
@@ -17,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "migrate:status": "prisma migrate status"
+    "migrate:status": "prisma migrate status",
+    "sync:strings": "tsx sync.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1"

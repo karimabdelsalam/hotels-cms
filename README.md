@@ -48,7 +48,9 @@ The second account exists so the tenancy rules are exercised rather than assumed
 
 `pnpm db:reset` rebuilds and reseeds. `pnpm db:studio` opens Prisma Studio.
 `pnpm db:migrate` creates a migration after a schema change; `pnpm db:deploy` applies
-pending ones, which is what the server runs.
+pending ones, which is what the server runs. `pnpm db:sync-strings` reconciles the English
+catalogue in `apps/web/messages/en.json` with the database — run it after changing any UI
+wording; deploys do it automatically.
 
 Deploying to the VPS is covered in [`docs/deployment.md`](docs/deployment.md); the
 configuration it refers to lives in `infra/`.

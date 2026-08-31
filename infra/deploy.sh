@@ -30,6 +30,12 @@ pnpm --filter @fantazia/db exec prisma generate
 log "Applying migrations"
 pnpm --filter @fantazia/db exec prisma migrate deploy
 
+# Keys live in code, translations in the database. Syncing here means a wording
+# change in en.json always reaches the Translation Manager, and every other
+# language is flagged for review rather than silently going stale.
+log "Syncing translation keys"
+pnpm --filter @fantazia/db sync:strings
+
 log "Building"
 pnpm build
 

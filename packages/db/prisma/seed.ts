@@ -442,6 +442,41 @@ async function main() {
     });
   }
 
+  // ---------- UI strings ----------
+  // Keys come from code, translations from the database. The English catalogue
+  // in apps/web/messages/en.json is the source.
+  const { syncTranslationKeys } = await import("../src/i18n");
+  const enCatalogue = (
+    await import("../../../apps/web/messages/en.json", { with: { type: "json" } })
+  ).default;
+  const sync = await syncTranslationKeys(enCatalogue as never);
+  console.log(
+    `  strings      +${sync.added} new, ${sync.drifted} drifted, ${sync.removed} removed`,
+  );
+
+  // Arabic values that have actually been translated. A value identical to the
+  // English one has not been touched yet, and stays `missing` so it shows up in
+  // the manager rather than looking done.
+  const arCatalogue = (
+    await import("../../../apps/web/messages/ar.json", { with: { type: "json" } })
+  ).default;
+  const { flatten, sourceHash } = await import("../src/i18n");
+  const enFlat = flatten(enCatalogue as never);
+  const arFlat = flatten(arCatalogue as never);
+  let arImported = 0;
+  for (const [path, value] of Object.entries(arFlat)) {
+    if (!value.trim() || value === enFlat[path]) continue;
+    const dot = path.indexOf(".");
+    const namespace = dot === -1 ? "common" : path.slice(0, dot);
+    const key = dot === -1 ? path : path.slice(dot + 1);
+    await db.translationString.updateMany({
+      where: { namespace, key, localeCode: AR },
+      data: { value, status: "translated", sourceHash: sourceHash(enFlat[path] ?? "") },
+    });
+    arImported += 1;
+  }
+  console.log(`  arabic       ${arImported} strings imported`);
+
   // ---------- staff accounts ----------
   // Dev credentials only. Production seeds nothing and the first account is
   // created by an administrator.
