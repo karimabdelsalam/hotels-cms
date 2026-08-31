@@ -315,6 +315,8 @@ button { font-family: inherit; }
 .confirm-row > span { color: var(--ink-3); font-size: 0.875rem; }
 .confirm-row.total { border-block-start: 1px solid var(--line); padding-block-start: 12px;
   font-family: var(--serif); font-size: 1.25rem; }
+.lookup { max-width: 420px; margin-block-start: 24px; }
+.lookup .inp[name="reference"] { letter-spacing: 0.08em; }
 @media (max-width: 880px) {
   .search { flex-direction: column; border-radius: 24px; }
   .fld { border-radius: 16px; padding: 14px 20px; }
