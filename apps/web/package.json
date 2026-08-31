@@ -10,12 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fantazia/booking": "workspace:*",
     "@fantazia/db": "workspace:*",
+    "@fantazia/media": "workspace:*",
     "next": "15.1.6",
     "next-intl": "^3.26.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "@fantazia/media": "workspace:*"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

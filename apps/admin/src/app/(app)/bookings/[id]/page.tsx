@@ -28,7 +28,10 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
         },
       },
       payments: { orderBy: { createdAt: "asc" } },
-      events: { orderBy: { createdAt: "asc" } },
+      // A tiebreaker matters: several transitions can land in the same
+      // millisecond, and a trail that reorders itself between page loads is
+      // worse than useless to whoever is reconstructing what happened.
+      events: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
     },
   });
   if (!booking) notFound();

@@ -595,11 +595,39 @@ export async function getMenu(locale: string, key: string) {
 }
 
 /** Minor units to a display string, e.g. 390000 → "EGP 3,900". */
+/**
+ * A price, formatted for the reader.
+ *
+ * `Intl.NumberFormat` throws on an empty locale, a malformed tag, or an
+ * unknown currency code — and it threw in production, taking a whole resort
+ * listing down over a formatting argument. A price is never worth a blank
+ * page, so an unusable locale falls back to English and an unusable currency
+ * prints the number with the code beside it.
+ */
 export function formatMoney(minor: number | null, currency: string, locale: string): string | null {
   if (minor == null) return null;
-  return new Intl.NumberFormat(locale === "ar" ? "ar-EG-u-nu-latn" : locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(minor / 100);
+
+  // Arabic reads more naturally here with Latin digits: a rate is scanned, not
+  // read, and mixed numerals in a price list are hard to compare.
+  const tag = locale === "ar" ? "ar-EG-u-nu-latn" : locale || DEFAULT_LOCALE;
+  const amount = minor / 100;
+
+  try {
+    return new Intl.NumberFormat(tag, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    try {
+      return new Intl.NumberFormat(DEFAULT_LOCALE, {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch {
+      // The currency itself is unusable. Still better than nothing on screen.
+      return `${new Intl.NumberFormat(DEFAULT_LOCALE, { maximumFractionDigits: 0 }).format(amount)} ${currency}`.trim();
+    }
+  }
 }

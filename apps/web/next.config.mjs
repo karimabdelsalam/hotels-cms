@@ -6,7 +6,7 @@ const withNextIntl = createNextIntlPlugin("./src/lib/i18n.ts");
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@fantazia/db", "@fantazia/media"],
+  transpilePackages: ["@fantazia/db", "@fantazia/media", "@fantazia/booking"],
   serverExternalPackages: ["sharp"],
   webpack: (config, { isServer }) => {
     // sharp ships optional native packages that webpack cannot resolve at

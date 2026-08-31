@@ -72,6 +72,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@fantazia/booking':
+        specifier: workspace:*
+        version: link:../../packages/booking
       '@fantazia/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -90,6 +93,9 @@ importers:
       react-dom:
         specifier: 19.0.0
         version: 19.0.0(react@19.0.0)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.10.7

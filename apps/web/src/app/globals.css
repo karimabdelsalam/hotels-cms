@@ -237,6 +237,84 @@ button { font-family: inherit; }
 .fld .k { font-size: 0.625rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--on-deep-3); font-weight: 600; }
 .fld .v { font-size: 0.9375rem; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .search .btn { padding-inline: 32px; flex-shrink: 0; }
+/* The date inputs sit inside the glass field, so they carry no chrome of
+   their own — the field is the control. */
+.fld input.v { background: none; border: none; color: inherit; font: inherit; padding: 0;
+  width: 100%; cursor: pointer; }
+.fld input.v::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; cursor: pointer; }
+.fld input.v:focus-visible { outline: 2px solid var(--on-deep); outline-offset: 4px; border-radius: 4px; }
+.fld--who { position: relative; padding: 0; }
+.who-toggle { width: 100%; height: 100%; padding: 12px 24px; border-radius: 100px;
+  background: none; border: none; color: inherit; text-align: start; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px; }
+.who-pop {
+  position: absolute; inset-block-start: calc(100% + 10px); inset-inline-start: 0;
+  min-width: 280px; z-index: 20; padding: 16px; border-radius: 16px;
+  background: var(--shell); border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(3,32,46,0.22); color: var(--ink);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.counter { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 0.9375rem; }
+.counter-ctrls { display: flex; align-items: center; gap: 12px; }
+.counter-ctrls button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2);
+  background: none; color: var(--ink); font-size: 1rem; cursor: pointer; line-height: 1; }
+.counter-ctrls button:disabled { opacity: 0.35; cursor: default; }
+.counter-ctrls b { min-width: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+
+/* ---------- booking ---------- */
+.narrow { max-width: 720px; }
+.page-top { padding-block-start: clamp(90px, 12vw, 150px); }
+.stay-summary { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--ink-2); font-size: 0.9375rem; }
+.empty-state { padding: 48px 0; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+.results { display: flex; flex-direction: column; gap: 22px; }
+.result { background: var(--shell); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.result-head { display: flex; gap: 20px; align-items: center; padding: 20px; flex-wrap: wrap; }
+.result-shot { position: relative; width: 180px; aspect-ratio: 3 / 2; border-radius: 14px; overflow: hidden; flex: none; }
+/* Named for availability, not offers: `.offers` and `.offer-body` already
+   belong to the promotions pages further down this file, and reusing them
+   silently inherited a three-column grid. */
+.avail-list { list-style: none; margin: 0; padding: 0; border-block-start: 1px solid var(--line); }
+.avail-row { display: flex; gap: 18px; align-items: center; padding: 18px 20px;
+  border-block-end: 1px solid var(--line); flex-wrap: wrap; }
+.avail-row:last-child { border-block-end: none; }
+.avail-shot { position: relative; width: 140px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; flex: none; }
+.avail-body { flex: 1 1 260px; display: flex; flex-direction: column; gap: 8px; }
+.avail-body h3 { font-size: 1.125rem; }
+.avail-price { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; text-align: end; margin-inline-start: auto; }
+.avail-price .v { font-family: var(--serif); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.avail-price .u { font-size: 0.75rem; color: var(--ink-3); }
+.fact--warn { border-color: var(--coral); color: var(--coral); }
+.policy { font-size: 0.8125rem; color: var(--ink-3); max-width: 46ch; }
+
+.checkout { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start; }
+@media (min-width: 900px) { .checkout { grid-template-columns: 1.2fr 0.8fr; gap: 48px; } }
+.checkout-form { display: flex; flex-direction: column; gap: 14px; }
+.checkout-summary { background: var(--shell); border: 1px solid var(--line); border-radius: 20px;
+  padding: 24px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 100px; }
+.stay-where { font-family: var(--serif); font-size: 1.25rem; }
+.stay-when { color: var(--ink-2); font-size: 0.9375rem; }
+.lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lines li { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9375rem; }
+.lines li small { display: block; color: var(--ink-3); font-size: 0.75rem; }
+.lines--totals { border-block-start: 1px solid var(--line); padding-block-start: 12px; }
+.lines .total { border-block-start: 1px solid var(--line); padding-block-start: 10px;
+  font-family: var(--serif); font-size: 1.25rem; }
+.policy-box { border-block-start: 1px solid var(--line); padding-block-start: 12px; }
+.policy-box h3 { font-size: 0.6875rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); margin-block-end: 4px; }
+.policy-box p { font-size: 0.8125rem; color: var(--ink-2); }
+.price-changed { background: var(--sand); border: 1px solid var(--coral); border-radius: 16px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px; margin-block-end: 18px; }
+.price-changed h2 { font-size: 1.0625rem; }
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 560px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9375rem; }
+.confirm-card { background: var(--shell); border: 1px solid var(--line); border-radius: 20px;
+  padding: 24px; display: flex; flex-direction: column; gap: 12px; margin-block: 24px; }
+.confirm-row { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.confirm-row > span { color: var(--ink-3); font-size: 0.875rem; }
+.confirm-row.total { border-block-start: 1px solid var(--line); padding-block-start: 12px;
+  font-family: var(--serif); font-size: 1.25rem; }
 @media (max-width: 880px) {
   .search { flex-direction: column; border-radius: 24px; }
   .fld { border-radius: 16px; padding: 14px 20px; }
