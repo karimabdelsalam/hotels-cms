@@ -9,7 +9,7 @@ server you control and one command.
 ```bash
 curl -fsSL https://get.docker.com | sh
 git clone -b <branch> <repo> /opt/fantazia && cd /opt/fantazia
-cp .env.docker.example .env && nano .env      # four values
+./infra/docker/setup-env.sh <public-host> <admin-host> <email>
 docker compose up -d --build
 ```
 
@@ -22,6 +22,11 @@ mistakes where a path or a port is wrong and the failure is invisible.
 The real difference is not the command count. It is that you stop repairing a
 running server: the image builds completely or it fails, and a half-applied
 configuration never exists.
+
+`setup-env.sh` generates the secrets, writes `.env`, and chmods it to 600.
+Write it by hand instead if you prefer — but do not leave any required key as
+`""`. Compose treats an empty value exactly like a missing one, and the error
+names the variable without hinting that it is sitting in the file, blank.
 
 ## Requirements
 
