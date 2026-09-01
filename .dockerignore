@@ -14,8 +14,7 @@ coverage
 # per-server and arrives through docker compose at run time instead.
 .env
 .env.*
-!.env.example
-!.env.docker.example
+!.env*.example
 
 .git
 .github

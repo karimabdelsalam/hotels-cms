@@ -8,8 +8,7 @@ coverage/
 *.log
 .env
 .env.*
-!.env.example
-!.env.production.example
+!.env*.example
 .DS_Store
 .idea/
 .vscode/
