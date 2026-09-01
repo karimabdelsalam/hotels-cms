@@ -2,6 +2,8 @@
 
 > **بالعربي:** نفس الخطوات بالتفصيل في [`التشغيل-على-نطاق-فرعي.md`](./التشغيل-على-نطاق-فرعي.md).
 
+> **On a plain Ubuntu server instead?** [`deploy-docker.md`](./deploy-docker.md) replaces every step below with one command, and is the easier route.
+
 Written for **`ihotel.planova.com.eg`**, which is where this is going first.
 Substitute your own hostnames if that changes; nothing below depends on the
 names themselves.

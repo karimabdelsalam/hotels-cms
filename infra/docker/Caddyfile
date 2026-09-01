@@ -1,0 +1,54 @@
+# Certificates are obtained and renewed automatically. Point the DNS at this
+# server, open 80 and 443, and there is nothing else to do — no AutoSSL button,
+# no renewal cron, no expiry outage a year from now.
+{
+	email {$ACME_EMAIL}
+}
+
+{$PUBLIC_DOMAIN} {
+	encode zstd gzip
+
+	# Served straight off the shared volume, so Node never sees an image
+	# request. Storage keys are unique per upload, so the bytes at a URL
+	# never change and can be cached forever.
+	handle_path /media/* {
+		root * /media
+		header Cache-Control "public, max-age=31536000, immutable"
+		header X-Content-Type-Options "nosniff"
+		file_server
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+{$ADMIN_DOMAIN} {
+	encode zstd gzip
+
+	# Uploads are processed synchronously — resizing a large photo into four
+	# variants in two formats takes longer than the default allows.
+	reverse_proxy admin:3001 {
+		transport http {
+			read_timeout 180s
+		}
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "DENY"
+		X-Robots-Tag "noindex, nofollow"
+	}
+
+	# The portal holds guest data and integration credentials. Once you know
+	# the office and VPN addresses, uncomment this and it answers nobody else.
+	#
+	# @notallowed not remote_ip 197.0.0.0/24 41.0.0.0/24
+	# respond @notallowed 403
+}

@@ -1,0 +1,150 @@
+# The whole platform, on a bare Ubuntu server.
+#
+#   cp .env.docker.example .env    # fill in four values
+#   docker compose up -d --build
+#
+# Caddy is the only thing bound to a public port. It gets certificates from
+# Let's Encrypt on its own and renews them without being asked, which is the
+# single biggest reason this is less work than the cPanel route.
+
+name: fantazia
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fantazia
+      POSTGRES_DB: fantazia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fantazia -d fantazia"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Deliberately no `ports:`. The database is reachable from the other
+    # containers and from nowhere else. To open psql:
+    #   docker compose exec db psql -U fantazia
+
+  # Migrations and first-run seeding. Runs to completion, then the apps start.
+  release:
+    image: fantazia-app
+    build: &build
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: https://${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN in .env}
+        NEXT_PUBLIC_MEDIA_URL_BASE: https://${PUBLIC_DOMAIN}/media
+    command: ["release.sh"]
+    env_file: .env
+    environment: &appenv
+      DATABASE_URL: postgresql://fantazia:${POSTGRES_PASSWORD}@db:5432/fantazia?schema=public&connection_limit=5
+      MEDIA_ROOT: /media
+      NEXT_PUBLIC_SITE_URL: https://${PUBLIC_DOMAIN}
+      NEXT_PUBLIC_MEDIA_URL_BASE: https://${PUBLIC_DOMAIN}/media
+      WEB_URL: http://web:3000
+    volumes:
+      - media:/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    image: fantazia-app
+    build: *build
+    restart: unless-stopped
+    command: ["pnpm", "--filter", "@fantazia/web", "start"]
+    env_file: .env
+    environment: *appenv
+    volumes:
+      - media:/media
+    depends_on:
+      release:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  admin:
+    image: fantazia-app
+    build: *build
+    restart: unless-stopped
+    command: ["pnpm", "--filter", "@fantazia/admin", "start"]
+    env_file: .env
+    environment: *appenv
+    volumes:
+      - media:/media
+    depends_on:
+      release:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  # Not optional. Without it, a booking whose confirmation call to the property
+  # failed is never retried, and no confirmation email ever leaves the outbox.
+  worker:
+    image: fantazia-app
+    build: *build
+    restart: unless-stopped
+    command: ["pnpm", "--filter", "@fantazia/worker", "start"]
+    env_file: .env
+    environment: *appenv
+    volumes:
+      - media:/media
+    depends_on:
+      release:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:?set ADMIN_DOMAIN in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env}
+    volumes:
+      - ./infra/docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - media:/media:ro
+      - caddy_data:/data      # certificates — losing this means re-issuing them
+      - caddy_config:/config
+    depends_on:
+      - web
+      - admin
+
+  # Replaces the build-time placeholder HTML with the real thing before anyone
+  # visits. Exits immediately; `docker compose ps` showing it stopped is normal.
+  warmup:
+    image: fantazia-app
+    build: *build       # same image as the rest; declared so compose never
+                        # tries to pull a tag that only exists locally
+    command: ["warmup.sh"]
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

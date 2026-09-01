@@ -7,6 +7,8 @@
 > domain, which is the step after.
 > An Arabic version of that guide is at [`التشغيل-على-نطاق-فرعي.md`](./التشغيل-على-نطاق-فرعي.md).
 
+> **On a plain Ubuntu server instead?** [`deploy-docker.md`](./deploy-docker.md) replaces every step below with one command, and is the easier route.
+
 
 Written for the confirmed environment: **your own VPS, root access, WHM and
 cPanel.** That combination removes every constraint shared hosting would have
