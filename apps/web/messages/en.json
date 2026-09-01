@@ -4,6 +4,17 @@
     "myBooking": "My Booking",
     "skipToContent": "Skip to content"
   },
+  "menu": {
+    "home": "Home",
+    "resorts": "Our Resorts",
+    "offers": "Offers",
+    "experiences": "Experiences",
+    "diving": "The Reef",
+    "weddings": "Weddings",
+    "destinations": "Destinations",
+    "myBooking": "My Booking",
+    "contact": "Contact"
+  },
   "search": {
     "resort": "Resort",
     "allResorts": "All three",

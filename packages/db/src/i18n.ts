@@ -150,6 +150,61 @@ export async function syncTranslationKeys(source: MessageTree): Promise<SyncRepo
  * requested locale, then its fallback, then the default. A missing string
  * renders in English — never as a raw key in front of a guest.
  */
+export type CatalogueImport = { imported: number; skippedHumanEdited: number; unchanged: number };
+
+/**
+ * Load a translated catalogue from code into the database.
+ *
+ * A value identical to the English one is not a translation — it is the
+ * fallback showing through — so those are skipped and the row stays `missing`,
+ * where the manager will surface it.
+ *
+ * A row a person has edited is never touched, whatever this file says. The
+ * catalogue in code is a starting point; once someone has had an opinion about
+ * a string, their opinion is the one that stands.
+ *
+ * Runs on every release rather than only on a fresh seed, so translations
+ * written in code reach databases that already exist.
+ */
+export async function importCatalogue(
+  localeCode: string,
+  source: MessageTree,
+  translated: MessageTree,
+): Promise<CatalogueImport> {
+  const sourceFlat = flatten(source);
+  const targetFlat = flatten(translated);
+  const report: CatalogueImport = { imported: 0, skippedHumanEdited: 0, unchanged: 0 };
+
+  for (const [path, value] of Object.entries(targetFlat)) {
+    const english = sourceFlat[path];
+    if (!value.trim() || english === undefined || value === english) continue;
+
+    const { namespace, key } = splitKey(path);
+    const existing = await prisma.translationString.findFirst({
+      where: { namespace, key, localeCode },
+      select: { id: true, value: true, humanEdited: true },
+    });
+    if (!existing) continue;
+
+    if (existing.humanEdited) {
+      report.skippedHumanEdited += 1;
+      continue;
+    }
+    if (existing.value === value) {
+      report.unchanged += 1;
+      continue;
+    }
+
+    await prisma.translationString.update({
+      where: { id: existing.id },
+      data: { value, status: "translated", sourceHash: sourceHash(english) },
+    });
+    report.imported += 1;
+  }
+
+  return report;
+}
+
 export async function getUiMessages(locale: string): Promise<MessageTree> {
   const [rows, localeRow] = await Promise.all([
     prisma.translationString.findMany({

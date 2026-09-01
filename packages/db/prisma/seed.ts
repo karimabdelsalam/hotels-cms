@@ -471,28 +471,14 @@ async function main() {
     `  strings      +${sync.added} new, ${sync.drifted} drifted, ${sync.removed} removed`,
   );
 
-  // Arabic values that have actually been translated. A value identical to the
-  // English one has not been touched yet, and stays `missing` so it shows up in
-  // the manager rather than looking done.
+  // Same importer the release runs, so a fresh database and an existing one
+  // end up with identical Arabic — and neither overwrites a human edit.
   const arCatalogue = (
     await import("../../../apps/web/messages/ar.json", { with: { type: "json" } })
   ).default;
-  const { flatten, sourceHash } = await import("../src/i18n");
-  const enFlat = flatten(enCatalogue as never);
-  const arFlat = flatten(arCatalogue as never);
-  let arImported = 0;
-  for (const [path, value] of Object.entries(arFlat)) {
-    if (!value.trim() || value === enFlat[path]) continue;
-    const dot = path.indexOf(".");
-    const namespace = dot === -1 ? "common" : path.slice(0, dot);
-    const key = dot === -1 ? path : path.slice(dot + 1);
-    await db.translationString.updateMany({
-      where: { namespace, key, localeCode: AR },
-      data: { value, status: "translated", sourceHash: sourceHash(enFlat[path] ?? "") },
-    });
-    arImported += 1;
-  }
-  console.log(`  arabic       ${arImported} strings imported`);
+  const { importCatalogue } = await import("../src/i18n");
+  const arReport = await importCatalogue(AR, enCatalogue as never, arCatalogue as never);
+  console.log(`  arabic       ${arReport.imported} strings imported`);
 
   // ---------- staff accounts ----------
   // Dev credentials only. Production seeds nothing and the first account is

@@ -6,6 +6,7 @@
  * translated name and the English description, rather than a blank page.
  */
 import { prisma } from "./index";
+import { getUiMessages } from "./i18n";
 
 export const DEFAULT_LOCALE = "en";
 
@@ -478,16 +479,16 @@ export async function getPageBySlug(locale: string, slug: string) {
  * is off the item is not rendered, so a menu can never link into a section that
  * has been turned off.
  */
-export const MENU_ROUTES: Record<string, { label: string; module?: string }> = {
-  "/": { label: "Home" },
-  "/resorts": { label: "Our Resorts", module: "resorts" },
-  "/offers": { label: "Offers", module: "offers" },
-  "/experiences": { label: "Experiences", module: "experiences" },
-  "/diving": { label: "The Reef", module: "reef" },
-  "/weddings": { label: "Weddings", module: "weddings" },
-  "/destinations": { label: "Destinations", module: "destinations" },
-  "/my-booking": { label: "My Booking" },
-  "/contact": { label: "Contact" },
+export const MENU_ROUTES: Record<string, { label: string; key: string; module?: string }> = {
+  "/": { label: "Home", key: "home" },
+  "/resorts": { label: "Our Resorts", key: "resorts", module: "resorts" },
+  "/offers": { label: "Offers", key: "offers", module: "offers" },
+  "/experiences": { label: "Experiences", key: "experiences", module: "experiences" },
+  "/diving": { label: "The Reef", key: "diving", module: "reef" },
+  "/weddings": { label: "Weddings", key: "weddings", module: "weddings" },
+  "/destinations": { label: "Destinations", key: "destinations", module: "destinations" },
+  "/my-booking": { label: "My Booking", key: "myBooking" },
+  "/contact": { label: "Contact", key: "contact" },
 };
 
 /**
@@ -521,6 +522,13 @@ export async function getMenu(locale: string, key: string) {
   if (!menu) return [];
 
   const modules = await getModules();
+
+  // Route items have no CMS row to carry a name, so their labels come from the
+  // interface catalogue — which means they translate with everything else and
+  // are editable in the translation manager, instead of being English constants
+  // that only a deploy can change.
+  const messages = (await getUiMessages(locale)) as { menu?: Record<string, string> };
+  const menuStrings = messages.menu ?? {};
 
   type Resolved = { id: string; label: string; href: string; newTab: boolean; children: Resolved[] };
 
@@ -558,7 +566,7 @@ export async function getMenu(locale: string, key: string) {
         const def = item.route ? MENU_ROUTES[item.route] : undefined;
         if (!def) return null;
         if (def.module && !modules.enabled(def.module)) return null; // module switched off
-        label ??= def.label;
+        label ??= menuStrings[def.key] ?? def.label;
         href = `/${locale}${item.route === "/" ? "" : item.route}`;
         break;
       }
