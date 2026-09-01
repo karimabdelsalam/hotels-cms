@@ -10,9 +10,27 @@
 # into a twenty minute one.
 
 FROM node:22-bookworm-slim AS base
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable
+
+# OpenSSL, because Prisma picks its query engine by detecting the system
+# OpenSSL version. The slim image ships none, so detection falls back to
+# openssl-1.1.x — while the build stage, which pulls OpenSSL in as a
+# dependency of PostgreSQL, generates a client for openssl-3.0.x. The mismatch
+# is invisible until the first query, which fails with a missing query engine.
+# Installing it here puts the same answer in both stages.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# pnpm installed globally and pinned, rather than through corepack. Corepack
+# caches its download per user: the build runs as root and the containers run
+# as node, which cannot read root's cache — so every container start went back
+# to the registry for pnpm, at the mercy of a network it should not need.
+#
+# Pinned to the version in package.json's packageManager field. pnpm 10 checks
+# that field and fetches a different version if they disagree, which would put
+# the download right back.
+RUN npm install -g pnpm@10.33.0
+
 WORKDIR /app
 
 
