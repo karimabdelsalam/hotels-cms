@@ -53,6 +53,12 @@ async function clean() {
   await resetSimulator();
 }
 
+/**
+ * The seed lays down 120 nights starting the day it runs, so an offset near
+ * that edge passes on the day the database was seeded and fails every day
+ * after — search returns nothing and the failure surfaces as an undefined
+ * property, nowhere near the cause. Offsets here stay well inside the window.
+ */
 async function makePaid(reference: string, offset: number, locale: string, email: string) {
   const results = await search({ checkIn: day(offset), checkOut: day(offset+2), occupancy: { adults: 2, children: 1, childAges: [7] }, roomsCount: 1 });
   const first = results.find((r) => r.rooms.length > 0)!;
@@ -72,7 +78,7 @@ async function main() {
 
   // ---------- without SMTP configured, nothing is lost ----------
   delete process.env.SMTP_HOST;
-  const unconfigured = await makePaid("FNT-MAIL-01", 110, "en", "yara@example.test");
+  const unconfigured = await makePaid("FNT-MAIL-01", 20, "en", "yara@example.test");
   await confirmBooking(unconfigured);
   const queued = await prisma.bookingNotification.findMany();
   check("a confirmation is queued at the transition", queued.length === 1, `${queued.length}`);
@@ -120,7 +126,7 @@ async function main() {
 
   // ---------- Arabic ----------
   received.length = 0;
-  const ar = await makePaid("FNT-MAIL-02", 114, "ar", "nour@example.test");
+  const ar = await makePaid("FNT-MAIL-02", 24, "ar", "nour@example.test");
   await confirmBooking(ar);
   await drainOutbox();
   check("the Arabic guest gets an email", received.length === 1, `${received.length}`);
@@ -138,7 +144,7 @@ async function main() {
 
   // ---------- the honest one ----------
   received.length = 0;
-  const rejected = await makePaid("FNT-FAIL-REJECT", 118, "en", "omar@example.test");
+  const rejected = await makePaid("FNT-FAIL-REJECT", 28, "en", "omar@example.test");
   await confirmBooking(rejected);
   await drainOutbox();
   check("a booking that could not be made still emails the guest", received.length === 1, `${received.length}`);

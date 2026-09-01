@@ -49,6 +49,13 @@ model Locale {
   cancellationPolicyTranslations CancellationPolicyTranslation[]
   ratePlanTranslations           RatePlanTranslation[]
 
+  brandTrans           BrandTranslation[]
+  facilityTrans        FacilityTranslation[]
+  resortPolicyTrans    ResortPolicyTranslation[]
+  faqTrans             FaqTranslation[]
+  attractionTrans      NearbyAttractionTranslation[]
+  venueTrans           VenueTranslation[]
+
   @@map("locales")
 }
 
@@ -144,6 +151,15 @@ model MediaAsset {
   offerHeroes       Offer[]       @relation("OfferHero")
   restaurantHeroes  Restaurant[]  @relation("RestaurantHero")
 
+  brandLogos        Brand[]            @relation("BrandLogo")
+  brandHeroes       Brand[]            @relation("BrandHero")
+  facilityHeroes    Facility[]         @relation("FacilityHero")
+  attractionHeroes  NearbyAttraction[] @relation("AttractionHero")
+  venueHeroes       Venue[]            @relation("VenueHero")
+  venueGallery      VenueMedia[]
+  restaurantMenus   Restaurant[]       @relation("RestaurantMenu")
+  restaurantGallery RestaurantMedia[]
+
   @@map("media_assets")
 }
 
@@ -211,6 +227,8 @@ model Resort {
   id            String  @id @default(cuid())
   code          String  @unique // maps to the OPERA resort code later
   destinationId String
+  /// Optional: a single-brand group leaves this unset and nothing changes.
+  brandId       String?
   starRating    Int?
   address       String?
   latitude      Float?
@@ -233,6 +251,7 @@ model Resort {
   updatedAt DateTime @updatedAt
 
   destination  Destination         @relation(fields: [destinationId], references: [id])
+  brand        Brand?              @relation(fields: [brandId], references: [id])
   heroMedia    MediaAsset?         @relation("ResortHero", fields: [heroMediaId], references: [id])
   translations ResortTranslation[]
   gallery      ResortMedia[]
@@ -252,6 +271,15 @@ model Resort {
   bookingHolds       BookingHold[]
   bookings           Booking[]
   integrationLogs    IntegrationLog[]
+
+  facilities   Facility[]
+  policies     ResortPolicy[]
+  faqs         Faq[]
+  attractions  NearbyAttraction[]
+  venues       Venue[]
+  reviews      Review[]
+  sections     ResortSection[]
+  experiences  Experience[]
 
   @@map("resorts")
 }
@@ -398,13 +426,19 @@ model Restaurant {
   cuisine      String?
   dressCode    String?
   openingHours String?
+  /// A menu the guest can open, and where "Reserve a table" goes. Both
+  /// optional: a restaurant with neither simply shows no button.
+  menuMediaId    String?
+  reservationUrl String?
   heroMediaId  String?
   displayOrder Int     @default(0)
   status       String  @default("published")
 
   resort       Resort                  @relation(fields: [resortId], references: [id], onDelete: Cascade)
   heroMedia    MediaAsset?             @relation("RestaurantHero", fields: [heroMediaId], references: [id])
+  menuMedia    MediaAsset?             @relation("RestaurantMenu", fields: [menuMediaId], references: [id])
   translations RestaurantTranslation[]
+  gallery      RestaurantMedia[]
 
   @@index([resortId, status])
   @@map("restaurants")
@@ -429,6 +463,8 @@ model RestaurantTranslation {
 model Experience {
   id            String  @id @default(cuid())
   code          String  @unique
+  /// Null means the experience belongs to the group and shows on every hotel.
+  resortId      String?
   category      String  @default("water") // water | desert | wellness | family
   durationHours Float?
   priceMinor    Int?
@@ -439,6 +475,7 @@ model Experience {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  resort       Resort?                 @relation(fields: [resortId], references: [id], onDelete: SetNull)
   heroMedia    MediaAsset?             @relation("ExperienceHero", fields: [heroMediaId], references: [id])
   translations ExperienceTranslation[]
   menuItems    MenuItem[]
@@ -1240,4 +1277,323 @@ model BookingNotification {
   @@unique([bookingId, kind, channel])
   @@index([status, nextAttemptAt])
   @@map("booking_notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Hotel detail page
+//
+// Everything the internal hotel page shows that had nowhere to live: the
+// brand, the facilities, the policies, the FAQs, what is nearby, the event
+// venues, the guest scores, and which sections a given hotel shows at all.
+//
+// Two things deliberately NOT added here:
+//
+//   Country and City. Destination already carries a country code, coordinates
+//   and translated name and slug — it is the city. A second pair of models
+//   would be two more places for the same fact to disagree.
+//
+//   A media table per entity. MediaAsset plus a join is the pattern the
+//   resort gallery already uses, and every gallery below reuses it.
+// ---------------------------------------------------------------------------
+
+/// A hotel brand. Optional throughout: a single-brand group leaves it unset
+/// and no page changes.
+model Brand {
+  id           String  @id @default(cuid())
+  code         String  @unique
+  logoMediaId  String?
+  heroMediaId  String?
+  displayOrder Int     @default(0)
+  status       String  @default("published")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  logoMedia    MediaAsset?        @relation("BrandLogo", fields: [logoMediaId], references: [id])
+  heroMedia    MediaAsset?        @relation("BrandHero", fields: [heroMediaId], references: [id])
+  translations BrandTranslation[]
+  resorts      Resort[]
+
+  @@map("brands")
+}
+
+model BrandTranslation {
+  id          String  @id @default(cuid())
+  brandId     String
+  localeCode  String  @db.VarChar(12)
+  name        String
+  slug        String
+  tagline     String?
+  description String?
+
+  brand  Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([brandId, localeCode])
+  @@index([localeCode, slug])
+  @@map("brand_translations")
+}
+
+/// A facility at one hotel: pool, spa, gym, kids club. Distinct from Amenity,
+/// which is a checklist tick shared across hotels — a facility has its own
+/// description, hours and photograph.
+model Facility {
+  id           String  @id @default(cuid())
+  resortId     String
+  category     String  @default("general") // wellness | leisure | family | services | business
+  icon         String?
+  openingHours String?
+  heroMediaId  String?
+  displayOrder Int     @default(0)
+  status       String  @default("published")
+
+  resort       Resort                @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  heroMedia    MediaAsset?           @relation("FacilityHero", fields: [heroMediaId], references: [id])
+  translations FacilityTranslation[]
+
+  @@index([resortId, status])
+  @@map("facilities")
+}
+
+model FacilityTranslation {
+  id          String  @id @default(cuid())
+  facilityId  String
+  localeCode  String  @db.VarChar(12)
+  name        String
+  description String?
+
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  locale   Locale   @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([facilityId, localeCode])
+  @@map("facility_translations")
+}
+
+/// House rules. Separate from CancellationPolicy, which the booking engine
+/// enforces — these are text a guest reads, not terms code applies.
+model ResortPolicy {
+  id           String @id @default(cuid())
+  resortId     String
+  category     String @default("general") // arrival | children | pets | payment | smoking
+  displayOrder Int    @default(0)
+
+  resort       Resort                    @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  translations ResortPolicyTranslation[]
+
+  @@index([resortId])
+  @@map("resort_policies")
+}
+
+model ResortPolicyTranslation {
+  id         String @id @default(cuid())
+  policyId   String
+  localeCode String @db.VarChar(12)
+  title      String
+  body       String
+
+  policy ResortPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  locale Locale       @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([policyId, localeCode])
+  @@map("resort_policy_translations")
+}
+
+/// A question and its answer. resortId null means it applies to the whole
+/// group and shows on every hotel.
+model Faq {
+  id           String  @id @default(cuid())
+  resortId     String?
+  category     String  @default("general") // booking | arrival | dining | facilities
+  displayOrder Int     @default(0)
+  status       String  @default("published")
+
+  resort       Resort?          @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  translations FaqTranslation[]
+
+  @@index([resortId, status])
+  @@map("faqs")
+}
+
+model FaqTranslation {
+  id         String @id @default(cuid())
+  faqId      String
+  localeCode String @db.VarChar(12)
+  question   String
+  answer     String
+
+  faq    Faq    @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([faqId, localeCode])
+  @@map("faq_translations")
+}
+
+/// Somewhere worth going near a hotel. Distance and travel time are stored
+/// rather than computed: the useful number is by road, and a straight line
+/// between two coordinates is not that.
+model NearbyAttraction {
+  id             String  @id @default(cuid())
+  resortId       String
+  kind           String  @default("attraction") // airport | city | landmark | shopping | transport
+  distanceKm     Float?
+  travelMinutes  Int?
+  latitude       Float?
+  longitude      Float?
+  heroMediaId    String?
+  displayOrder   Int     @default(0)
+
+  resort       Resort                        @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  heroMedia    MediaAsset?                   @relation("AttractionHero", fields: [heroMediaId], references: [id])
+  translations NearbyAttractionTranslation[]
+
+  @@index([resortId])
+  @@map("nearby_attractions")
+}
+
+model NearbyAttractionTranslation {
+  id           String  @id @default(cuid())
+  attractionId String
+  localeCode   String  @db.VarChar(12)
+  name         String
+  description  String?
+
+  attraction NearbyAttraction @relation(fields: [attractionId], references: [id], onDelete: Cascade)
+  locale     Locale           @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([attractionId, localeCode])
+  @@map("nearby_attraction_translations")
+}
+
+/// A meetings and events space.
+model Venue {
+  id           String  @id @default(cuid())
+  resortId     String
+  areaSqm      Float?
+  ceilingM     Float?
+  daylight     Boolean @default(false)
+  heroMediaId  String?
+  displayOrder Int     @default(0)
+  status       String  @default("published")
+
+  resort       Resort             @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  heroMedia    MediaAsset?        @relation("VenueHero", fields: [heroMediaId], references: [id])
+  translations VenueTranslation[]
+  layouts      VenueLayout[]
+  gallery      VenueMedia[]
+
+  @@index([resortId, status])
+  @@map("venues")
+}
+
+model VenueTranslation {
+  id          String  @id @default(cuid())
+  venueId     String
+  localeCode  String  @db.VarChar(12)
+  name        String
+  slug        String
+  description String?
+  equipment   String?
+
+  venue  Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  locale Locale @relation(fields: [localeCode], references: [code], onDelete: Cascade)
+
+  @@unique([venueId, localeCode])
+  @@index([localeCode, slug])
+  @@map("venue_translations")
+}
+
+/// Capacity depends entirely on how the room is laid out, so it is stored per
+/// layout rather than as one number on the venue.
+model VenueLayout {
+  id       String @id @default(cuid())
+  venueId  String
+  layout   String // theatre | classroom | banquet | ushape | boardroom | reception | cabaret
+  capacity Int
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, layout])
+  @@map("venue_layouts")
+}
+
+model VenueMedia {
+  venueId      String
+  mediaId      String
+  displayOrder Int    @default(0)
+
+  venue Venue      @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  media MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([venueId, mediaId])
+  @@map("venue_media")
+}
+
+/// A guest review. Scores are stored per category; the overall figure shown on
+/// the page is derived, never a second number that can drift from its parts.
+///
+/// `source` records where it came from, because a review imported from a
+/// travel site and one left here are not equally verifiable and should never
+/// be presented as if they were.
+model Review {
+  id          String   @id @default(cuid())
+  resortId    String
+  bookingId   String?
+  source      String   @default("direct") // direct | imported
+  guestName   String
+  guestCountry String?
+  stayedAt    DateTime?
+  title       String?
+  body        String
+  localeCode  String   @db.VarChar(12)
+  status      String   @default("pending") // pending | published | rejected
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  resort Resort              @relation(fields: [resortId], references: [id], onDelete: Cascade)
+  scores ReviewCategoryScore[]
+
+  @@index([resortId, status, publishedAt])
+  @@map("reviews")
+}
+
+model ReviewCategoryScore {
+  reviewId String
+  category String // cleanliness | location | service | facilities | value
+  score    Int // 1–10
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@id([reviewId, category])
+  @@map("review_category_scores")
+}
+
+/// Which sections a hotel shows, and in what order.
+///
+/// Per hotel rather than global: a resort with no spa should not display an
+/// empty facilities heading, and a resort with no venues should not advertise
+/// meetings. A missing row means the section's default, so adding a section in
+/// code does not require a row for every existing hotel.
+model ResortSection {
+  resortId     String
+  section      String // overview | gallery | rooms | facilities | dining | offers | venues | experiences | location | attractions | policies | reviews | faq | contact | related
+  enabled      Boolean @default(true)
+  displayOrder Int     @default(0)
+
+  resort Resort @relation(fields: [resortId], references: [id], onDelete: Cascade)
+
+  @@id([resortId, section])
+  @@map("resort_sections")
+}
+
+model RestaurantMedia {
+  restaurantId String
+  mediaId      String
+  displayOrder Int    @default(0)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  media      MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([restaurantId, mediaId])
+  @@map("restaurant_media")
 }
