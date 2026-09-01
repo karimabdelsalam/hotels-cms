@@ -36,7 +36,10 @@ services:
       args:
         NEXT_PUBLIC_SITE_URL: https://${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN in .env}
         NEXT_PUBLIC_MEDIA_URL_BASE: https://${PUBLIC_DOMAIN}/media
-    command: ["release.sh"]
+    # Root only until the media volume is writable, then it drops to node —
+    # see release-entrypoint.sh. Nothing else in the stack runs as root.
+    user: "0:0"
+    command: ["release-entrypoint.sh"]
     env_file: .env
     environment: &appenv
       DATABASE_URL: postgresql://fantazia:${POSTGRES_PASSWORD}@db:5432/fantazia?schema=public&connection_limit=5

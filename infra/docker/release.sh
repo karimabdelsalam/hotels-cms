@@ -25,27 +25,39 @@ pnpm --filter @fantazia/db exec prisma migrate deploy
 #
 # No catch: if this query fails the answer is unknown, and guessing "empty"
 # would re-seed a database that already has content.
-echo "→ checking whether this is a fresh database"
-RESORTS=$(pnpm --filter @fantazia/db exec node -e '
+# Each seed is guarded on what that seed produces, not on one shared "is the
+# database fresh" answer. A run that seeded the resorts and then died before
+# the images would otherwise never be completed: the resort count says
+# populated, and the images never arrive.
+#
+# Single-line output, two numbers, so one connection answers both.
+echo "→ checking what is already seeded"
+COUNTS=$(pnpm --filter @fantazia/db exec node -e '
   const { PrismaClient } = require("@prisma/client");
   const p = new PrismaClient();
-  p.resort.count()
-    .then((n) => { console.log(n); return p.$disconnect(); })
+  Promise.all([p.resort.count(), p.mediaAsset.count()])
+    .then(([r, m]) => { console.log(r + " " + m); return p.$disconnect(); })
     .catch((e) => { console.error(e.message); process.exit(1); });
 ')
+# shellcheck disable=SC2086
+set -- $COUNTS
+RESORTS=${1:-0}
+ASSETS=${2:-0}
 
 if [ "$RESORTS" = "0" ]; then
-  echo "→ empty database, seeding"
+  echo "→ no resorts, seeding structure and availability"
   pnpm --filter @fantazia/db seed
   pnpm --filter @fantazia/db seed:booking
-
-  if [ "${SEED_DEMO_CONTENT:-yes}" = "yes" ]; then
-    # Draws its own images, so this is the slow part of a first run.
-    echo "→ seeding demo content and images"
-    pnpm --filter @fantazia/db seed:demo
-  fi
 else
-  echo "→ database already holds $RESORTS resorts, leaving it alone"
+  echo "→ $RESORTS resorts already, leaving them alone"
+fi
+
+if [ "${SEED_DEMO_CONTENT:-yes}" = "yes" ] && [ "$ASSETS" = "0" ]; then
+  # Draws its own images, so this is the slow part of a first run.
+  echo "→ no media, seeding demo content and images"
+  pnpm --filter @fantazia/db seed:demo
+else
+  echo "→ $ASSETS media assets already, leaving them alone"
 fi
 
 # After the seed, never before it. This tops up interface strings added since
