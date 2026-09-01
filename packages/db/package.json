@@ -21,7 +21,7 @@
     "migrate:status": "prisma migrate status",
     "sync:strings": "tsx sync.ts",
     "seed:booking": "tsx seed-booking.ts",
-    "seed:demo": "tsx seed-demo.ts"
+    "seed:demo": "tsx --conditions=react-server seed-demo.ts"
   },
   "dependencies": {
     "@fantazia/media": "workspace:*",
