@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getResorts, getExperiences, getOffers, getModules, getBrand } from "@fantazia/db/content";
 import { alternatesFor } from "@/lib/seo";
 import { Hero } from "@/components/Hero";
+import type { HeroSlide } from "@/components/HeroSlider";
 import { Reveal } from "@/components/Reveal";
 import { ResortCard } from "@/components/ResortCard";
 
@@ -48,9 +49,31 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const labels = { from: tr("from"), perNight: tr("perNight"), book: tr("book") };
 
+  // The video leads, then one slide per property. Replace the files under
+  // public/demo with the group's own footage and this needs no change.
+  const heroSlides: HeroSlide[] = [
+    {
+      kind: "video",
+      poster: "/demo/hero-poster.jpg",
+      sources: [
+        // Narrow viewports take the 720p cut first: same footage, a third of
+        // the bytes, and nobody can tell at that size.
+        { src: "/demo/hero-loop-720.mp4", type: "video/mp4", media: "(max-width: 900px)" },
+        { src: "/demo/hero-loop.webm", type: "video/webm" },
+        { src: "/demo/hero-loop.mp4", type: "video/mp4" },
+      ],
+    },
+    ...resorts.map((r, i) => ({
+      kind: "image" as const,
+      media: r.hero,
+      fallbackClass: (["f-1", "f-2", "f-3"][i % 3] ?? "f-1"),
+      caption: r.name,
+    })),
+  ];
+
   return (
     <>
-      <Hero />
+      <Hero slides={heroSlides} />
 
       {modules.enabled("manifesto") && (
         <section className="section sec-shell">

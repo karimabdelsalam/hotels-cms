@@ -229,13 +229,65 @@ body:has(.resort-hero) .nav:not(.stuck)::before {
   justify-content: flex-end; overflow: hidden; isolation: isolate; color: var(--on-deep);
 }
 .plate { position: absolute; inset: 0; z-index: 0; background: var(--sea); }
-.plate canvas, .plate video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.plate canvas { filter: blur(34px) saturate(150%); transform: scale(1.22); }
+.plate-slide {
+  position: absolute; inset: 0; opacity: 0;
+  transition: opacity 900ms ease;
+  /* Held out of the paint and out of the a11y tree while off. */
+  visibility: hidden;
+}
+.plate-slide.is-on { opacity: 1; visibility: visible; }
+.plate-slide video,
+.plate-slide .fill,
+.plate-slide picture.fill img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+/* A slow drift, so a still property photograph does not sit dead beside the
+   video slide. Off entirely when motion is not wanted. */
+.plate-slide.is-on picture.fill img { animation: plate-drift 18s ease-out both; }
+@keyframes plate-drift { from { transform: scale(1.06); } to { transform: scale(1); } }
+
 .plate::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(to bottom, rgba(3,44,65,0.34) 0%, rgba(3,44,65,0.02) 22%,
     rgba(3,44,65,0.34) 58%, rgba(3,44,65,0.86) 100%);
 }
+/* Slider controls. Logical properties throughout: the arrows must swap sides
+   in Arabic, and inset-inline does that without a [dir] rule. */
+.plate-ui {
+  position: absolute; z-index: 3;
+  inset-block-end: clamp(18px, 3vw, 30px);
+  inset-inline-end: clamp(18px, 4vw, 44px);
+  display: flex; align-items: center; gap: 10px;
+}
+.plate-arrow {
+  inline-size: 34px; block-size: 34px; padding: 0;
+  display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,0.34); border-radius: 50%;
+  background: rgba(3,44,65,0.28); color: var(--on-deep);
+  cursor: pointer; transition: background 200ms ease, border-color 200ms ease;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.plate-arrow:hover { background: rgba(3,44,65,0.52); border-color: rgba(255,255,255,0.62); }
+.plate-arrow:focus-visible { outline: 2px solid var(--on-deep); outline-offset: 2px; }
+/* The arrows point at the previous and next slide, which reverse in RTL. */
+[dir="rtl"] .plate-arrow svg { transform: scaleX(-1); }
+[dir="rtl"] .plate-hold svg { transform: none; }
+
+.plate-dots { display: flex; align-items: center; gap: 7px; margin-inline: 4px; }
+.plate-dots button {
+  inline-size: 7px; block-size: 7px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255,255,255,0.42); cursor: pointer;
+  transition: background 200ms ease, transform 200ms ease;
+}
+.plate-dots button:hover { background: rgba(255,255,255,0.72); }
+.plate-dots button.is-on { background: var(--on-deep); transform: scale(1.5); }
+.plate-dots button:focus-visible { outline: 2px solid var(--on-deep); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .plate-slide { transition: none; }
+  .plate-slide.is-on picture.fill img { animation: none; }
+}
+
 .hero-inner {
   position: relative; z-index: 2; padding-block: 0 clamp(34px, 5vw, 58px);
   display: flex; flex-direction: column; gap: clamp(30px, 4.4vw, 52px);

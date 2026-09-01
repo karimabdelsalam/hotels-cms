@@ -39,7 +39,12 @@
     "weddingsEyebrow": "Weddings & events",
     "weddingsTitle": "One brief. Three resorts. One answer.",
     "weddingsBody": "Send a single request and every resort that fits comes back to you — capacities, rates, and dates in one reply, instead of three conversations that contradict each other.",
-    "weddingsCta": "Send a request"
+    "weddingsCta": "Send a request",
+    "sliderPrev": "الشريحة السابقة",
+    "sliderNext": "الشريحة التالية",
+    "sliderGoTo": "اذهب إلى الشريحة",
+    "sliderPause": "إيقاف العرض",
+    "sliderPlay": "استئناف العرض"
   },
   "resort": {
     "from": "From",
